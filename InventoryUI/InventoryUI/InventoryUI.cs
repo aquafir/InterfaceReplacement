@@ -1,29 +1,9 @@
-﻿using AcClient;
-using ACE.DatLoader.FileTypes;
-using Decal.Adapter;
-using ImGuiNET;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
+﻿using ImGuiNET;
 using System;
-using System.ComponentModel;
-using System.Data.Common;
-using System.Drawing;
 using System.Numerics;
-using System.Reflection;
-using System.Runtime.Remoting.Contexts;
-using System.Security.Claims;
-using System.Security.Policy;
-using System.Security.Principal;
-using System.Text.RegularExpressions;
-using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Interop;
 using UtilityBelt.Service;
 using UtilityBelt.Service.Views;
-using static AcClient._STL;
-using static System.Net.Mime.MediaTypeNames;
-using WattleScript.Interpreter;
-using ACEditor.Table;
-using System.Collections.Generic;
 
 namespace InventoryUI;
 internal class InventoryUI : IDisposable
@@ -45,9 +25,9 @@ internal class InventoryUI : IDisposable
         hud = UBService.Huds.CreateHud("InventoryUI");
         hud.WindowSettings = ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoScrollbar;
 
-
         // set to show our icon in the UBService HudBar
         hud.ShowInBar = true;
+        hud.Visible = true;
 
         // subscribe to the hud render event so we can draw some controls
         hud.OnPreRender += Hud_OnPreRender;
@@ -66,7 +46,7 @@ internal class InventoryUI : IDisposable
     {
         try
         {
-
+            backpack.Render();
         }
         catch (Exception ex)
         {

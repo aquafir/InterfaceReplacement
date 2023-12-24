@@ -1,6 +1,4 @@
-﻿using ACE.Entity.Enum.Properties;
-
-namespace ACEditor.Props;
+﻿namespace ACEditor.Props;
 
 public enum PropertyInstanceId : ushort
 {

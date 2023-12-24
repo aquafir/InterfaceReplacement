@@ -12,6 +12,7 @@
     <ProjectGuid>9df5118f-8552-40cf-81bc-ef51c59d79b0</ProjectGuid>
     <RootNamespace>InventoryUI</RootNamespace>
     <AssemblyName>InventoryUI</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <None Include="PluginCore.cs" />

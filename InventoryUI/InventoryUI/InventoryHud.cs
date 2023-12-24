@@ -1,13 +1,16 @@
-﻿using AcClient;
+﻿using ACE.DatLoader.FileTypes;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Interop;
 using UtilityBelt.Scripting.Lib;
+using UtilityBelt.Service.Lib.Settings;
 using UtilityBelt.Service.Views;
+using WattleScript.Interpreter;
 
 namespace InventoryUI;
 
@@ -16,7 +19,7 @@ public class InventoryHud
     private const int PLAYER_ICON = 0x0600127E;
     ScriptHudManager sHud = new();
     Game game = new();
-    Hud hud;
+    //Hud hud;
     //List<PropertyFilter> filters = new();
 
 
@@ -36,7 +39,9 @@ public class InventoryHud
     bool UseFilterString = true;
     Vector2 IconSize = new(24, 24);
 
-    int SelectedBag = 0;// game.CharacterId,
+    private float DrawItemIndex = 0;
+
+    uint SelectedBag = 0;// game.CharacterId,
 
     ImGuiTableColumnFlags[] columnFlags = {
         ImGuiTableColumnFlags.WidthFixed,
@@ -46,18 +51,18 @@ public class InventoryHud
     };
 
 
-    public InventoryHud(Hud hud)
+    public InventoryHud()
     {
-        this.hud = hud;
+        //this.hud = hud;
     }
 
     public void Render()
     {
         try
         {
-            //DrawOptions();
-            //DrawFilter();
-            //DrawInventory();
+            DrawOptions();
+            DrawFilter();
+            DrawInventory();
         }
         catch (Exception ex)
         {
@@ -66,6 +71,7 @@ public class InventoryHud
     }
 
     Regex FilterRegex = new("", RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
+
     private void DrawFilter()
     {
         //Basic name filter
@@ -80,7 +86,7 @@ public class InventoryHud
 
         var comboWidth = 150;
         var filterWidth = 200;
-       
+
         //    for index, filter in ipairs(propFilters) do
         //        ImGui.SetNextItemWidth(comboWidth)
         //        -- print('test', value:TypeName())
@@ -111,43 +117,114 @@ public class InventoryHud
 
     private void DrawInventory()
     {
+        DrawItemIndex = 0;
+
         if (ShowBags)
         {
-            //        --Create a 2 - column table for bags and inventory
+            //Create a 2 - column table for bags and inventory
             ImGui.BeginTable("layout", 2, ImGuiTableFlags.BordersInner);
-            //        ImGui.TableSetupColumn("bags", IM.ImGuiTableColumnFlags.NoHeaderLabel + IM.ImGuiTableColumnFlags.WidthFixed,
-            //            s.IconSize.X)
-            //        ImGui.TableSetupColumn("items", IM.ImGuiTableColumnFlags.NoHeaderLabel)
-            //        ImGui.TableNextColumn()
-            //        --Draw player and containers
-            //        DrawBagIcon(s, game.Character.Weenie)
-            //        for i, bag in pairs(game.Character.Containers) do
-            //            DrawBagIcon(s, bag)
-            //        end
+            ImGui.TableSetupColumn("bags", ImGuiTableColumnFlags.NoHeaderLabel | ImGuiTableColumnFlags.WidthFixed, IconSize.X);
+            ImGui.TableSetupColumn("items", ImGuiTableColumnFlags.NoHeaderLabel);
+            ImGui.TableNextColumn();
 
-            //        --Move to next column and render selected bag
-            //        ImGui.TableNextColumn()
-            //        local wo = game.World.Get(s.SelectedBag)
-            //        ImGui.Text("Selected Container: "..tostring(wo))
+            //Draw player and containers
+            DrawBagIcon(game.Character.Weenie);
+            foreach (var bag in game.Character.Containers)
+            {
+                DrawBagIcon(bag);
+            }
 
-            //        DrawBagItems(s, wo.Items)
+            //Move to next column and render selected bag
+            ImGui.TableNextColumn();
+            var wo = game.World.Get(SelectedBag);
+            ImGui.Text($"Selected Container: {wo}");
+
+            DrawBagItems(wo.Items);
 
             ImGui.EndTable();
         }
         else
         {
-            //        --Render all items
-            //        DrawBagItems(s, game.Character.Weenie.AllItems)
+            //Render all items
+            DrawBagItems(game.Character.Weenie.AllItems);
         }
-        //function DrawInventory(s)
-        //    s.DrawItemIndex = 0
     }
 
+    private void DrawBagIcon(WorldObject wo)
+    {
+        if (ImGui.TextureButton($"{wo.Id}", GetOrCreateTexture(wo), IconSize))
+            SelectedBag = wo.Id;
+        DrawBagItemTooltip(wo);
+        DrawBagContextMenu(wo);
+    }
 
+    void DrawBagContextMenu(WorldObject wo)
+    {
+        if (ImGui.BeginPopupContextItem())
+        {
+            if (ImGui.MenuItem("Drop"))
+                wo.Drop();
+            //if ImGui.MenuItem("Give Selected") then
+            //    if game.World.Selected ~= nil then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        print('Nothing selected')
+            //    end
+            //end
+            //if ImGui.MenuItem("Give Player") then
+            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Player then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        wo.Give(game.World.GetNearest(ObjectClass.Player).Id)
+            //    end
+            //end
+            //if ImGui.MenuItem("Give Vendor") then
+            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Vendor then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        wo.Give(game.World.GetNearest(ObjectClass.Vendor).Id)
+            //    end
+        }
+
+        ImGui.EndPopup();
+    }
 
     private void BeginBagTable()
     {
+        if (true)
+            return;
 
+        //local flags = IM.ImGuiTableFlags.None + IM.ImGuiTableFlags.BordersInner + IM.ImGuiTableFlags.Resizable +
+        //    IM.ImGuiTableFlags.RowBg + IM.ImGuiTableFlags.Reorderable + IM.ImGuiTableFlags.Hideable +
+        //    IM.ImGuiTableFlags.ScrollY + IM.ImGuiTableFlags.Sortable
+        //ImGui.BeginTable("items-table", 4, flags, ImGui.GetContentRegionAvail())
+        //ImGui.TableSetupColumn("###Icon", s.columnFlags[1], 16)
+        //ImGui.TableSetupColumn("Name", s.columnFlags[2])
+        //ImGui.TableSetupColumn("Value", s.columnFlags[3])
+        //ImGui.TableSetupColumn("ObjectClass", s.columnFlags[4])
+        //ImGui.TableHeadersRow()
+
+        //for colIndex = 0, ImGui.TableGetColumnCount(), 1 do
+        //            s.columnFlags[colIndex + 1] = ImGui.TableGetColumnFlags(colIndex)
+        //end
+
+        //local specs = ImGui.TableGetSortSpecs()
+        //-- todo: needs tri sort support
+        //if specs ~= nil and specs.SortDirection ~= IM.ImGuiSortDirection.None then
+        //    local asc = specs.SortDirection == IM.ImGuiSortDirection.Ascending
+        //    local cIndex = specs.ColumnIndex
+        //    table.sort(wos, function(a, b)
+        //        if cIndex == 0 then
+        //            return Sort(asc, a.Value(DataId.Icon), b.Value(DataId.Icon))
+        //        elseif cIndex == 1 then
+        //            return Sort(asc, a.Name, b.Name)
+        //        elseif cIndex == 2 then
+        //            return Sort(asc, a.Value(IntId.Value), b.Value(IntId.Value))
+        //        elseif cIndex == 3 then
+        //            return Sort(asc, tostring(a.ObjectClass), tostring(b.ObjectClass))
+        //        end
+        //    end)
+        //end
     }
 
     //Returns true if an object is filtered given the current options and filters
@@ -179,7 +256,7 @@ public class InventoryHud
     /// <summary>
     /// Draw a bag contents in either table or bag layout
     /// </summary>
-    private void DrawBagItems(List<WorldObject> wos)
+    private void DrawBagItems(IList<WorldObject> wos)
     {
         //Start the content area for bags
         if (!ShowIcons)
@@ -187,13 +264,14 @@ public class InventoryHud
         else
             ImGui.BeginChild("items", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.None);
 
+        int i = 0;
         foreach (var wo in wos)
         {
             if (!IsFiltered(wo))
             {
                 if (ShowIcons)
                 {
-                    //DrawItemIcon(s, i, item)
+                    DrawItemIcon(i++, wo);
                 }
                 else
                 {
@@ -202,7 +280,7 @@ public class InventoryHud
                     ManagedTexture texture = GetOrCreateTexture(wo);
                     ImGui.TextureButton(wo.Id.ToString(), texture, new(16, 16));
 
-                    //DrawItemContextMenu(wo);
+                    DrawItemContextMenu(wo);
 
                     ImGui.TableSetColumnIndex(1);
                     ImGui.Text(wo.Name);
@@ -210,7 +288,6 @@ public class InventoryHud
                     ImGui.Text(wo.Value(IntId.Value).ToString());
                     ImGui.TableSetColumnIndex(3);
                     ImGui.Text(wo.ObjectClass.ToString());
-
                 }
             }
 
@@ -222,6 +299,29 @@ public class InventoryHud
             ImGui.EndTable();
         else
             ImGui.EndChild();
+    }
+
+    void DrawItemIcon(int index, WorldObject wo)
+    {
+        var pad = 4;
+        var availWidth = ImGui.GetContentRegionAvail().X - ((pad * 2));
+        var currentWidth = (DrawItemIndex * (IconSize.X + pad * 2)) + IconSize.X;
+
+        if (index != 1 && (currentWidth + pad * 2 + IconSize.X) < availWidth)
+        {
+            if (true)
+                ImGui.SameLine();
+            else
+                DrawItemIndex = -1;
+        }
+
+        var texture = GetOrCreateTexture(wo);
+        ImGui.TextureButton($"{wo.Id}", texture, IconSize);
+
+        DrawItemTooltip(wo);
+        DrawItemContextMenu(wo);
+
+        DrawItemIndex++;
     }
 
 
@@ -281,8 +381,7 @@ public class InventoryHud
     /// </summary>
     private void DrawItemTooltip(WorldObject wo)
     {
-        if (!_woTextures.TryGetValue(wo.WeenieClassId, out var texture))
-            return;
+        var texture = GetOrCreateTexture(wo);
 
         if (ImGui.IsItemHovered())
         {

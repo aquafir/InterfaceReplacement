@@ -1,15 +1,6 @@
-﻿using ACE.Server.Entity;
-using ACE.Server.WorldObjects;
-using ACEditor.Props;
-using Decal.Adapter.Wrappers;
-using Hellosam.Net.Collections;
+﻿using ACEditor.Props;
 using ImGuiNET;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using UtilityBelt.Scripting.Interop;
-using WorldObject = UtilityBelt.Scripting.Interop.WorldObject;
 
 namespace ACEditor.Table;
 

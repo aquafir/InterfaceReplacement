@@ -1,36 +1,15 @@
-﻿using AcClient;
-//using ACE.DatLoader.FileTypes;
+﻿//using ACE.DatLoader.FileTypes;
 //using ACE.Entity.Models;
-using CommandLine;
-using Decal.Adapter;
 using ImGuiNET;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Numerics;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
-using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Scripting.Lib;
 using UtilityBelt.Service;
-using UtilityBelt.Service.Views;
-using static AcClient.UIQueueManager;
-using static System.Net.Mime.MediaTypeNames;
-using static UtilityBelt.Common.Messages.Types.Fellowship;
-using static UtilityBelt.Common.Messages.Types.PlayerModule.OptionProperty.Window;
-using ACEditor.Props;
 using PropType = ACEditor.Props.PropType;
-using UtilityBelt.Scripting;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Linq.Expressions;
 using ACEditor.Table;
-using Decal.Adapter.Wrappers;
 using WorldObject = UtilityBelt.Scripting.Interop.WorldObject;
+using InventoryUI;
 
 namespace ACEditor;
 internal class PropertyEditor : IDisposable

@@ -1,7 +1,4 @@
-﻿using ACE.Entity.Enum.Properties;
-using System.ComponentModel;
-
-namespace ACEditor.Props;
+﻿namespace ACEditor.Props;
 
 public enum PropertyString : ushort
 {
