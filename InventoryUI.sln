@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34310.174
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryUI.Loader", "InventoryUI\InventoryUI.Loader\InventoryUI.Loader.csproj", "{E0730AC5-AA89-40B1-9FBE-E839601B4DBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryUI", "InventoryUI\InventoryUI\InventoryUI.csproj", "{9DF5118F-8552-40CF-81BC-EF51C59D79B0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E0730AC5-AA89-40B1-9FBE-E839601B4DBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0730AC5-AA89-40B1-9FBE-E839601B4DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0730AC5-AA89-40B1-9FBE-E839601B4DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0730AC5-AA89-40B1-9FBE-E839601B4DBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DF5118F-8552-40CF-81BC-EF51C59D79B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DF5118F-8552-40CF-81BC-EF51C59D79B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DF5118F-8552-40CF-81BC-EF51C59D79B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DF5118F-8552-40CF-81BC-EF51C59D79B0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2DA07F19-152B-4AC4-994F-22FAF644CC5C}
+	EndGlobalSection
+EndGlobal
