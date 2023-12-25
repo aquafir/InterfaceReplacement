@@ -70,51 +70,6 @@ public class InventoryHud
         }
     }
 
-    Regex FilterRegex = new("", RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
-
-    private void DrawFilter()
-    {
-        //Basic name filter
-        if (ImGui.InputText("Filter", ref FilterText, 512))
-        {
-            FilterRegex = new(FilterText, RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
-
-        }
-
-        //Extra filter section
-        if (!ShowExtraFilters) return;
-
-        var comboWidth = 150;
-        var filterWidth = 200;
-
-        //    for index, filter in ipairs(propFilters) do
-        //        ImGui.SetNextItemWidth(comboWidth)
-        //        -- print('test', value:TypeName())
-        //        --         local didChange, newValue = ImGui.InputText("###IntFilter", s.FilterIntText, 512)
-        //        -- if didChange then s.FilterIntText = newValue end
-
-        //        local didChange, newValue = ImGui.InputText("###Filter"..index, filter.valueText, 300)
-        //        if didChange then
-        //            --Todo decide where to keep text/input.Being lazy and adding it to filters
-        //            filter.valueText = newValue
-        //            if newValue == "" then
-        //                filter.valueRegex = nil
-        //            else
-        //                filter.valueRegex = Regex.new (newValue, RegexOptions.Compiled + RegexOptions.IgnoreCase)
-        //            end
-        //        end
-        //        ImGui.SameLine()
-        //        filter:DrawCombo()
-        //    end
-        //    --ObjectType
-        //    ImGui.SetNextItemWidth(comboWidth)
-        //    local didChange, newValue = ImGui.Combo("###ObjectTypeCombo", s.FilterObjectType - 1, otypeProps, #otypeProps)
-        //    if didChange then s.FilterObjectType = newValue + 1 end
-        //    ImGui.SameLine()
-        //    --ImGui.SameLine(comboWidth + filterWidth + 24)
-        //    if ImGui.Checkbox('Class', s.UseFilterType) then s.UseFilterType = not s.UseFilterType end
-    }
-
     private void DrawInventory()
     {
         DrawItemIndex = 0;
@@ -130,23 +85,21 @@ public class InventoryHud
             //Draw player and containers
             DrawBagIcon(game.Character.Weenie);
             foreach (var bag in game.Character.Containers)
-            {
                 DrawBagIcon(bag);
-            }
 
             //Move to next column and render selected bag
             ImGui.TableNextColumn();
-            var wo = game.World.Get(SelectedBag);
-            ImGui.Text($"Selected Container: {wo}");
+            //var wo = game.World.Get(SelectedBag);
+            //ImGui.Text($"Selected Container: {wo}");
 
-            DrawBagItems(wo.Items);
+            //DrawBagItems(wo.Items);
 
             ImGui.EndTable();
         }
         else
         {
             //Render all items
-            DrawBagItems(game.Character.Weenie.AllItems);
+            //DrawBagItems(game.Character.Weenie.AllItems);
         }
     }
 
@@ -156,37 +109,6 @@ public class InventoryHud
             SelectedBag = wo.Id;
         DrawBagItemTooltip(wo);
         DrawBagContextMenu(wo);
-    }
-
-    void DrawBagContextMenu(WorldObject wo)
-    {
-        if (ImGui.BeginPopupContextItem())
-        {
-            if (ImGui.MenuItem("Drop"))
-                wo.Drop();
-            //if ImGui.MenuItem("Give Selected") then
-            //    if game.World.Selected ~= nil then
-            //        wo.Give(game.World.Selected.Id)
-            //    else
-            //        print('Nothing selected')
-            //    end
-            //end
-            //if ImGui.MenuItem("Give Player") then
-            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Player then
-            //        wo.Give(game.World.Selected.Id)
-            //    else
-            //        wo.Give(game.World.GetNearest(ObjectClass.Player).Id)
-            //    end
-            //end
-            //if ImGui.MenuItem("Give Vendor") then
-            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Vendor then
-            //        wo.Give(game.World.Selected.Id)
-            //    else
-            //        wo.Give(game.World.GetNearest(ObjectClass.Vendor).Id)
-            //    end
-        }
-
-        ImGui.EndPopup();
     }
 
     private void BeginBagTable()
@@ -225,32 +147,6 @@ public class InventoryHud
         //        end
         //    end)
         //end
-    }
-
-    //Returns true if an object is filtered given the current options and filters
-    private bool IsFiltered(WorldObject wo)
-    {
-        if (!wo.HasAppraisalData)
-            wo.Appraise();
-
-        //    --Filter by regex
-        //    if s.FilterRegex ~= nil then return not s.FilterRegex.IsMatch(wo.Name) end
-
-        //    --Filter by ObjectType
-        //    if s.ShowExtraFilters and s.UseFilterType and wo.ObjectType ~= s.FilterObjectType then return true end
-
-        //    --Filter by Properties
-        //    if s.ShowExtraFilters then-- and s.UsePropertyFilters--just using them if showing
-        //        for index, filter in ipairs(propFilters) do
-        //            --print(filter:TypeName())
-        //            if filter.Enabled and filter.valueRegex ~= nil then
-        //                local val = filter:Value(wo)
-        //                if val == nil or not filter.valueRegex.IsMatch(val) then return true end
-        //            end
-        //        end
-        //    end
-
-        return false;
     }
 
     /// <summary>
@@ -301,6 +197,24 @@ public class InventoryHud
             ImGui.EndChild();
     }
 
+
+    #region Menu
+    private void DrawOptions()
+    {
+        if (ImGui.BeginMenuBar())
+        {
+            if (ImGui.BeginMenu("Options###InvOpt"))
+            {
+                ImGui.MenuItem("Show Bags", "", ref ShowBags);
+                ImGui.MenuItem("Show Icons", "", ref ShowIcons);
+                ImGui.MenuItem("Show Extra Filters", "", ref ShowExtraFilters);
+
+                ImGui.EndMenu();
+            }
+            ImGui.EndMenuBar();
+        }
+    }
+
     void DrawItemIcon(int index, WorldObject wo)
     {
         var pad = 4;
@@ -323,43 +237,9 @@ public class InventoryHud
 
         DrawItemIndex++;
     }
+    #endregion
 
-
-    readonly Dictionary<uint, ManagedTexture> _woTextures = new();
-    /// <summary>
-    /// Get or create a managed texture for a world object
-    /// </summary>
-    private ManagedTexture GetOrCreateTexture(WorldObject wo)
-    {
-        if (!_woTextures.TryGetValue(wo.WeenieClassId, out var texture))
-        {
-            if (wo.Id == game.Character.Id)
-                texture = sHud.GetIconTexture(PLAYER_ICON);
-            else
-                texture = sHud.GetIconTexture(wo.Value(DataId.Icon));
-
-            _woTextures.AddOrUpdate(wo.WeenieClassId, texture);
-        }
-
-        return texture;
-    }
-
-    private void DrawOptions()
-    {
-        if (ImGui.BeginMenuBar())
-        {
-            if (ImGui.BeginMenu("Options###InvOpt"))
-            {
-                ImGui.MenuItem("Show Bags", "", ref ShowBags);
-                ImGui.MenuItem("Show Icons", "", ref ShowIcons);
-                ImGui.MenuItem("Show Extra Filters", "", ref ShowExtraFilters);
-
-                ImGui.EndMenu();
-            }
-            ImGui.EndMenuBar();
-        }
-    }
-
+    #region Context Menu / Tooltips
     /// <summary>
     /// Draws hovered details for Container
     /// </summary>
@@ -393,6 +273,37 @@ public class InventoryHud
             ImGui.Text($"ObjectClass: {wo.ObjectClass}");
             ImGui.EndTooltip();
         }
+    }
+
+    void DrawBagContextMenu(WorldObject wo)
+    {
+        if (ImGui.BeginPopupContextItem())
+        {
+            if (ImGui.MenuItem("Drop"))
+                wo.Drop();
+            //if ImGui.MenuItem("Give Selected") then
+            //    if game.World.Selected ~= nil then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        print('Nothing selected')
+            //    end
+            //end
+            //if ImGui.MenuItem("Give Player") then
+            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Player then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        wo.Give(game.World.GetNearest(ObjectClass.Player).Id)
+            //    end
+            //end
+            //if ImGui.MenuItem("Give Vendor") then
+            //    if game.World.Selected ~= nil and game.World.Selected.ObjectClass == ObjectClass.Vendor then
+            //        wo.Give(game.World.Selected.Id)
+            //    else
+            //        wo.Give(game.World.GetNearest(ObjectClass.Vendor).Id)
+            //    end
+        }
+
+        ImGui.EndPopup();
     }
 
     /// <summary>
@@ -443,6 +354,102 @@ public class InventoryHud
         }
         ImGui.EndPopup();
     }
+    #endregion
+
+
+    #region Filters
+    Regex FilterRegex = new("", RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
+    private void DrawFilter()
+    {
+        //Basic name filter
+        if (ImGui.InputText("Filter", ref FilterText, 512))
+        {
+            FilterRegex = new(FilterText, RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
+
+        }
+
+        //Extra filter section
+        if (!ShowExtraFilters) return;
+
+        var comboWidth = 150;
+        var filterWidth = 200;
+
+        //    for index, filter in ipairs(propFilters) do
+        //        ImGui.SetNextItemWidth(comboWidth)
+        //        -- print('test', value:TypeName())
+        //        --         local didChange, newValue = ImGui.InputText("###IntFilter", s.FilterIntText, 512)
+        //        -- if didChange then s.FilterIntText = newValue end
+
+        //        local didChange, newValue = ImGui.InputText("###Filter"..index, filter.valueText, 300)
+        //        if didChange then
+        //            --Todo decide where to keep text/input.Being lazy and adding it to filters
+        //            filter.valueText = newValue
+        //            if newValue == "" then
+        //                filter.valueRegex = nil
+        //            else
+        //                filter.valueRegex = Regex.new (newValue, RegexOptions.Compiled + RegexOptions.IgnoreCase)
+        //            end
+        //        end
+        //        ImGui.SameLine()
+        //        filter:DrawCombo()
+        //    end
+        //    --ObjectType
+        //    ImGui.SetNextItemWidth(comboWidth)
+        //    local didChange, newValue = ImGui.Combo("###ObjectTypeCombo", s.FilterObjectType - 1, otypeProps, #otypeProps)
+        //    if didChange then s.FilterObjectType = newValue + 1 end
+        //    ImGui.SameLine()
+        //    --ImGui.SameLine(comboWidth + filterWidth + 24)
+        //    if ImGui.Checkbox('Class', s.UseFilterType) then s.UseFilterType = not s.UseFilterType end
+    }
+
+    //Returns true if an object is filtered given the current options and filters
+    private bool IsFiltered(WorldObject wo)
+    {
+        if (!wo.HasAppraisalData)
+            wo.Appraise();
+
+        //    --Filter by regex
+        //    if s.FilterRegex ~= nil then return not s.FilterRegex.IsMatch(wo.Name) end
+
+        //    --Filter by ObjectType
+        //    if s.ShowExtraFilters and s.UseFilterType and wo.ObjectType ~= s.FilterObjectType then return true end
+
+        //    --Filter by Properties
+        //    if s.ShowExtraFilters then-- and s.UsePropertyFilters--just using them if showing
+        //        for index, filter in ipairs(propFilters) do
+        //            --print(filter:TypeName())
+        //            if filter.Enabled and filter.valueRegex ~= nil then
+        //                local val = filter:Value(wo)
+        //                if val == nil or not filter.valueRegex.IsMatch(val) then return true end
+        //            end
+        //        end
+        //    end
+
+        return false;
+    }
+    #endregion
+
+    #region Utility
+    readonly Dictionary<uint, ManagedTexture> _woTextures = new();
+    /// <summary>
+    /// Get or create a managed texture for a world object
+    /// </summary>
+    private ManagedTexture GetOrCreateTexture(WorldObject wo)
+    {
+        if (!_woTextures.TryGetValue(wo.WeenieClassId, out var texture))
+        {
+            if (wo.Id == game.Character.Id)
+                texture = sHud.GetIconTexture(PLAYER_ICON);
+            else
+                texture = sHud.GetIconTexture(wo.Value(DataId.Icon));
+
+            _woTextures.AddOrUpdate(wo.WeenieClassId, texture);
+        }
+
+        return texture;
+    }
+
+    #endregion
 }
 
 
