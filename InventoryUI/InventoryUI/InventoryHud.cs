@@ -1,5 +1,6 @@
 ﻿using ACE.DatLoader.FileTypes;
 using ACEditor;
+using ACEditor.Props;
 using ACEditor.Table;
 using Decal.Adapter;
 using Decal.Adapter.Wrappers;
@@ -38,7 +39,12 @@ public class InventoryHud : IDisposable
 
     //Filters?
     string FilterText = "";
-    //List<PropertyFilter> filters = new();
+    List<PropertyFilter> filters = new()
+    {
+         new(PropType.PropertyString),
+         new(PropType.PropertyFloat),
+         new(PropType.PropertyInt),
+    };
 
     //Setup for icon textures
     readonly Vector2 IconSize = new(24, 24);
@@ -70,6 +76,8 @@ public class InventoryHud : IDisposable
 
         hud.OnShow += Hud_OnShow;
         //game.World.OnObjectCreated
+        game.Messages.Incoming.Qualities_UpdateInstanceID += Incoming_Qualities_UpdateInstanceID;
+        game.Messages.Incoming.Qualities_PrivateUpdateInstanceID += Incoming_Qualities_PrivateUpdateInstanceID;
     }
 
     #region Events
@@ -78,14 +86,23 @@ public class InventoryHud : IDisposable
         SetFilteredItems();
     }
 
+    private void Incoming_Qualities_PrivateUpdateInstanceID(object sender, UtilityBelt.Common.Messages.Events.Qualities_PrivateUpdateInstanceID_S2C_EventArgs e)
+    {
+        SetFilteredItems();
+    }
+
+    private void Incoming_Qualities_UpdateInstanceID(object sender, UtilityBelt.Common.Messages.Events.Qualities_UpdateInstanceID_S2C_EventArgs e)
+    {
+        SetFilteredItems();
+    }
     #endregion
 
     public void Render()
     {
         try
         {
-            //DrawOptions();
-            //DrawFilter();
+            DrawOptions();
+            DrawFilter();
             DrawInventory();
         }
         catch (Exception ex)
@@ -149,9 +166,9 @@ public class InventoryHud : IDisposable
     {
         ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail());
 
-        ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
-        ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name]);
-        ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60);
+        ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
+        ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
+        ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
         //ImGui.TableSetupColumn("ObjectClass", COLUMN_FLAGS[3]);
 
         ImGui.TableSetupScrollFreeze(0, 1);
@@ -203,10 +220,9 @@ public class InventoryHud : IDisposable
 
     private void DrawItemsAsTable()
     {
-        //BeginBagTable();
+        BeginBagTable();
 
         //if (ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail()))
-        //if (ImGui.BeginTable("items", COLUMN_FLAGS.Count, ImGuiTableFlags.Sortable, ImGui.GetContentRegionAvail()))
         //{
         //    //ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
         //    //ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name]);
@@ -215,57 +231,30 @@ public class InventoryHud : IDisposable
         //    ImGui.TableSetupColumn("Name");//, COLUMN_FLAGS[ItemColumn.Name]);
         //    ImGui.TableSetupColumn("Value");//, COLUMN_FLAGS[ItemColumn.Value], 60);
 
-        //    //ImGui.TableSetupScrollFreeze(0, 1);
+        //    ImGui.TableSetupScrollFreeze(0, 1);
         //    ImGui.TableHeadersRow();
-        C.Chat("Draw as table");
-        return;
 
-        //Sort if needed?
-        //Checked to make sure after headers is fine
-        //SortItems();
-        if (ImGui.BeginTable("table1", 3, ImGuiTableFlags.Sortable))
-        {
-            ImGui.TableSetupColumn("test");
-            ImGui.TableSetupColumn("foo");
-            ImGui.TableSetupColumn("bar");
-            ImGui.TableHeadersRow();
+        //    //Sort if needed?
+        //    SortItems();
 
-            var tableSortSpecs = ImGui.TableGetSortSpecs();
-            if (tableSortSpecs.SpecsDirty)
-            {
-                CoreManager.Current.Actions.AddChatText($"Sort Specs changed", 1);
-                // do sorting...
-                tableSortSpecs.SpecsDirty = false;
-            }
-
-            for (int row = 0; row < 4; row++)
+            foreach (var wo in filteredItems)
             {
                 ImGui.TableNextRow();
-                for (int column = 0; column < 3; column++)
-                {
-                    ImGui.TableSetColumnIndex(column);
-                    ImGui.Text($"Row {row} Column {column}");
-                }
+
+                ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
+                ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
+
+                ImGui.TableSetColumnIndex((int)ItemColumn.Name);
+                ImGui.Text(wo.Name);
+                DrawItemContextMenu(wo);
+
+                ImGui.TableSetColumnIndex((int)ItemColumn.Value);
+                ImGui.Text(wo.Value(IntId.Value).ToString());
             }
+
             ImGui.EndTable();
 
-            //foreach (var wo in filteredItems)
-            //{
-            //    ImGui.TableNextRow();
-
-            //    ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
-            //    ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
-
-            //    ImGui.TableSetColumnIndex((int)ItemColumn.Name);
-            //    ImGui.Text(wo.Name);
-            //    DrawItemContextMenu(wo);
-
-            //    ImGui.TableSetColumnIndex((int)ItemColumn.Value);
-            //    ImGui.Text(wo.Value(IntId.Value).ToString());
-            //}
-
-            //ImGui.EndTable();
-        }
+        //}
     }
 
     #region Menu
@@ -422,43 +411,20 @@ public class InventoryHud : IDisposable
         if (ImGui.InputText("Filter", ref FilterText, 512))
         {
             FilterRegex = new(FilterText, RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
-            C.Chat($"Rebuild filter: {FilterText}");
 
             SetFilteredItems();
         }
 
         //Extra filter section
-        //if (!ShowExtraFilters) return;
+        if (!ShowExtraFilters) return;
 
-        //var comboWidth = 150;
-        //var filterWidth = 200;
+        foreach(var filter in filters)
+        {
+            filter.Render();
 
-        //    for index, filter in ipairs(propFilters) do
-        //        ImGui.SetNextItemWidth(comboWidth)
-        //        -- print('test', value:TypeName())
-        //        --         local didChange, newValue = ImGui.InputText("###IntFilter", s.FilterIntText, 512)
-        //        -- if didChange then s.FilterIntText = newValue end
-
-        //        local didChange, newValue = ImGui.InputText("###Filter"..index, filter.valueText, 300)
-        //        if didChange then
-        //            --Todo decide where to keep text/input.Being lazy and adding it to filters
-        //            filter.valueText = newValue
-        //            if newValue == "" then
-        //                filter.valueRegex = nil
-        //            else
-        //                filter.valueRegex = Regex.new (newValue, RegexOptions.Compiled + RegexOptions.IgnoreCase)
-        //            end
-        //        end
-        //        ImGui.SameLine()
-        //        filter:DrawCombo()
-        //    end
-        //    --ObjectType
-        //    ImGui.SetNextItemWidth(comboWidth)
-        //    local didChange, newValue = ImGui.Combo("###ObjectTypeCombo", s.FilterObjectType - 1, otypeProps, #otypeProps)
-        //    if didChange then s.FilterObjectType = newValue + 1 end
-        //    ImGui.SameLine()
-        //    --ImGui.SameLine(comboWidth + filterWidth + 24)
-        //    if ImGui.Checkbox('Class', s.UseFilterType) then s.UseFilterType = not s.UseFilterType end
+            if(filter.Changed)
+                SetFilteredItems();
+        }
     }
 
     //Returns true if an object is filtered given the current options and filters
@@ -517,15 +483,11 @@ public class InventoryHud : IDisposable
         if (!tableSortSpecs.SpecsDirty)
             return;
 
-        tableSortSpecs.SpecsDirty = false;
-        C.Chat("Dirty");
-        return;
-
         //Find column/direction
         sortDirection = tableSortSpecs.Specs.SortDirection;
         sortColumn = tableSortSpecs.Specs.ColumnUserID;
 
-        //Console.WriteLine($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
+        C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
 
         if (sortDirection == ImGuiSortDirection.Ascending)
         {
