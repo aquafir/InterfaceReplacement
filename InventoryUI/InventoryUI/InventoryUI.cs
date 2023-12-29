@@ -17,7 +17,7 @@ internal class InventoryUI : IDisposable
     Vector2 MIN_SIZE = new(200, 200);
     Vector2 MAX_SIZE = new(1000, 900);
 
-    readonly InventoryHud backpack = new();
+    readonly InventoryHud backpack;
 
     public InventoryUI()
     {
@@ -27,11 +27,13 @@ internal class InventoryUI : IDisposable
 
         // set to show our icon in the UBService HudBar
         hud.ShowInBar = true;
-        hud.Visible = true;
+        hud.Visible = false;
 
         // subscribe to the hud render event so we can draw some controls
         hud.OnPreRender += Hud_OnPreRender;
         hud.OnRender += Hud_OnRender;
+
+        backpack = new(hud);
     }
 
     private void Hud_OnPreRender(object sender, EventArgs e)
@@ -57,5 +59,6 @@ internal class InventoryUI : IDisposable
     public void Dispose()
     {
         hud.Dispose();
+        backpack?.Dispose();
     }
 }

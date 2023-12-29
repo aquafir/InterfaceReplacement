@@ -85,10 +85,7 @@ public class PluginCore : PluginBase
     /// Log an exception to log.txt in the same directory as the plugin.
     /// </summary>
     /// <param name="ex"></param>
-    internal static void Log(Exception ex)
-    {
-        Log(ex.ToString());
-    }
+    internal static void Log(Exception ex) => Log(ex.ToString());
 
     /// <summary>
     /// Log a string to log.txt in the same directory as the plugin.
