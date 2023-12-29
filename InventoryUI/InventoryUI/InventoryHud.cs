@@ -1,6 +1,7 @@
 ﻿using ACE.DatLoader.FileTypes;
 using ACEditor;
 using ACEditor.Table;
+using Decal.Adapter;
 using Decal.Adapter.Wrappers;
 using ImGuiNET;
 using System;
@@ -28,7 +29,7 @@ public class InventoryHud : IDisposable
     Game game = new();
     private float Index = 0;
     uint SelectedBag = 0;// game.CharacterId,
-    List<WorldObject> filteredItems = new ();   //Filtered items to be drawn
+    List<WorldObject> filteredItems = new();   //Filtered items to be drawn
 
     //Options
     bool ShowBags = false;
@@ -83,8 +84,8 @@ public class InventoryHud : IDisposable
     {
         try
         {
-            DrawOptions();
-            DrawFilter();
+            //DrawOptions();
+            //DrawFilter();
             DrawInventory();
         }
         catch (Exception ex)
@@ -202,26 +203,70 @@ public class InventoryHud : IDisposable
 
     private void DrawItemsAsTable()
     {
-        BeginBagTable();
+        //BeginBagTable();
 
-        foreach (var wo in filteredItems)
+        //if (ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail()))
+        //if (ImGui.BeginTable("items", COLUMN_FLAGS.Count, ImGuiTableFlags.Sortable, ImGui.GetContentRegionAvail()))
+        //{
+        //    //ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
+        //    //ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name]);
+        //    //ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60);
+        //    ImGui.TableSetupColumn("Icon");//, COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
+        //    ImGui.TableSetupColumn("Name");//, COLUMN_FLAGS[ItemColumn.Name]);
+        //    ImGui.TableSetupColumn("Value");//, COLUMN_FLAGS[ItemColumn.Value], 60);
+
+        //    //ImGui.TableSetupScrollFreeze(0, 1);
+        //    ImGui.TableHeadersRow();
+        C.Chat("Draw as table");
+        return;
+
+        //Sort if needed?
+        //Checked to make sure after headers is fine
+        //SortItems();
+        if (ImGui.BeginTable("table1", 3, ImGuiTableFlags.Sortable))
         {
-            ImGui.TableNextRow();
+            ImGui.TableSetupColumn("test");
+            ImGui.TableSetupColumn("foo");
+            ImGui.TableSetupColumn("bar");
+            ImGui.TableHeadersRow();
 
-            ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
-            ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
+            var tableSortSpecs = ImGui.TableGetSortSpecs();
+            if (tableSortSpecs.SpecsDirty)
+            {
+                CoreManager.Current.Actions.AddChatText($"Sort Specs changed", 1);
+                // do sorting...
+                tableSortSpecs.SpecsDirty = false;
+            }
 
-            ImGui.TableSetColumnIndex((int)ItemColumn.Name);
-            ImGui.Text(wo.Name);
-            DrawItemContextMenu(wo);
+            for (int row = 0; row < 4; row++)
+            {
+                ImGui.TableNextRow();
+                for (int column = 0; column < 3; column++)
+                {
+                    ImGui.TableSetColumnIndex(column);
+                    ImGui.Text($"Row {row} Column {column}");
+                }
+            }
+            ImGui.EndTable();
 
-            ImGui.TableSetColumnIndex((int)ItemColumn.Value);
-            ImGui.Text(wo.Value(IntId.Value).ToString());
+            //foreach (var wo in filteredItems)
+            //{
+            //    ImGui.TableNextRow();
+
+            //    ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
+            //    ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
+
+            //    ImGui.TableSetColumnIndex((int)ItemColumn.Name);
+            //    ImGui.Text(wo.Name);
+            //    DrawItemContextMenu(wo);
+
+            //    ImGui.TableSetColumnIndex((int)ItemColumn.Value);
+            //    ImGui.Text(wo.Value(IntId.Value).ToString());
+            //}
+
+            //ImGui.EndTable();
         }
-
-        ImGui.EndTable();
     }
-
 
     #region Menu
     private void DrawOptions()
@@ -423,7 +468,7 @@ public class InventoryHud : IDisposable
             wo.Appraise();
 
         //Filter by regex
-        if(!String.IsNullOrEmpty(FilterText))
+        if (!String.IsNullOrEmpty(FilterText))
         {
             if (!FilterRegex.IsMatch(wo.Name))
                 return true;
@@ -445,7 +490,7 @@ public class InventoryHud : IDisposable
 
         return false;
     }
-    
+
     //Filter list
     private void SetFilteredItems()
     {
@@ -463,15 +508,16 @@ public class InventoryHud : IDisposable
     private ImGuiSortDirection sortDirection = ImGuiSortDirection.Ascending;
 
     //Sort if needed
-     private void SortItems()
+    private void SortItems()
     {
         var tableSortSpecs = ImGui.TableGetSortSpecs();
-        return;
+        //return;
+
         //Check if a sort is needed
         if (!tableSortSpecs.SpecsDirty)
             return;
 
-        //tableSortSpecs.SpecsDirty = false;
+        tableSortSpecs.SpecsDirty = false;
         C.Chat("Dirty");
         return;
 
@@ -481,7 +527,7 @@ public class InventoryHud : IDisposable
 
         //Console.WriteLine($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
 
-        if(sortDirection == ImGuiSortDirection.Ascending)
+        if (sortDirection == ImGuiSortDirection.Ascending)
         {
             filteredItems = sortColumn switch
             {
