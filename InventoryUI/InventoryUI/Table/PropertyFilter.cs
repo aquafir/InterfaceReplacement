@@ -3,8 +3,10 @@
 //using Decal.Adapter;
 //using Decal.Adapter.Wrappers;
 using ImGuiNET;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UtilityBelt.Common.Enums;
 
 
 namespace ACEditor.Table;
@@ -17,16 +19,32 @@ public class PropertyFilter
     public PropType Type { get; set; } = PropType.Unknown;
     public PropertyData Target { get; set; } = new();
 
-    public bool ShowName { get; set; } = true;
+    public bool ShowName { get; set; } = false;
 
-    public bool ShowIncludeMissing { get; set; } = true;
-    public bool IncludeMissing = false;
+    public bool ShowIncludeMissing { get; set; } = false;
+
+    public int Width = 150;
+    public bool IncludeMissing = true;
 
     public bool UseFilter { get; set; } = true;
     //public bool UseRegex { get; set; } = true;
 
+    /// <summary>
+    /// Selected index of the filtered Property combo
+    /// </summary>
     public int SelectedIndex = 0;
+
+    /// <summary>
+    /// Selected text of the filtered Property combo
+    /// </summary>
     public string Selection => SelectedIndex < Props.Length ? Props[SelectedIndex] : null;
+
+    /// <summary>
+    /// The index of the corresponding PropType's enum value or null if unavailable
+    /// </summary>
+    public int? EnumIndex = null;
+
+
 
     //Name of Property Enum keys
     public string[] Props { get; set; } = new string[0];
@@ -41,7 +59,8 @@ public class PropertyFilter
     {
         Type = type;
         Label = Type.ToString();
-        Name = Label;
+        Name = "";
+        UpdateFilter();
     }
 
     public void Render()
@@ -51,19 +70,21 @@ public class PropertyFilter
 
         if (ShowName)
         {
+            ImGui.SetNextItemWidth(Width);
             ImGui.LabelText($"###{Label}", $"{Name} ({Props.Length})");
             ImGui.SameLine();
         }
 
+        ImGui.SetNextItemWidth(Width);
         if (ImGui.Combo($"###{Label}Combo", ref SelectedIndex, Props, Props.Length))
         {
-            C.Chat(Selection ?? "");
+            Changed = true;
         }
 
         if (UseFilter)
         {
-            ImGui.SetNextItemWidth(200);
-            ImGui.SameLine();
+            ImGui.SetNextItemWidth(Width);
+            //ImGui.SameLine();
 
             if (ImGui.InputText($"{Name}###{Label}Filter", ref FilterText, 256))
             {
@@ -95,7 +116,26 @@ public class PropertyFilter
             Props = Props.Where(x => regex.IsMatch(x)).ToArray();
         }
 
-        //C.Chat("Filter changed");
+
+        //Find the enum index if possible
+        if (String.IsNullOrEmpty(Selection))
+            return;
+
+        EnumIndex =
+            Type switch
+            {
+                //PropType.Unknown => Enum.TryParse<StringId>(Selection, out var result) ? (int)result : null,
+                PropType.Bool => Enum.TryParse<BoolId>(Selection, out var result) ? (int)result : null,
+                PropType.DataId => Enum.TryParse<DataId>(Selection, out var result) ? (int)result : null,
+                PropType.Float => Enum.TryParse<FloatId>(Selection, out var result) ? (int)result : null,
+                PropType.InstanceId => Enum.TryParse<InstanceId>(Selection, out var result) ? (int)result : null,
+                PropType.Int => Enum.TryParse<IntId>(Selection, out var result) ? (int)result : null,
+                PropType.Int64 => Enum.TryParse<Int64Id>(Selection, out var result) ? (int)result : null,
+                PropType.String => Enum.TryParse<StringId>(Selection, out var result) ? (int)result : null,
+                _ => null,
+            };
+
+        //C.Chat($"Update enum: {EnumIndex ?? 0} - {Type} - {Selection ?? "nil"} - {(EnumIndex ?? -1).ToString()}");
     }
 
     internal void SetTarget(PropertyData target)

@@ -21,12 +21,12 @@ internal class PropertyEditor : IDisposable
     readonly Game game = new();
     readonly List<PropertyTable> propTables = new()
     {
-        new (PropType.PropertyInt),
-        new (PropType.PropertyInt64),
-        new (PropType.PropertyFloat),
-        new (PropType.PropertyString),
-        new (PropType.PropertyDataId),
-        new (PropType.PropertyInstanceId),
+        new (PropType.Int),
+        new (PropType.Int64),
+        new (PropType.Float),
+        new (PropType.String),
+        new (PropType.DataId),
+        new (PropType.InstanceId),
     };
 
     /// <summary>

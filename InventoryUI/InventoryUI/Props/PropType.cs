@@ -15,13 +15,13 @@ public enum PropType
     //PropertyAttribute,
     //PropertyAttribute2nd,
     //PropertyBook,
-    PropertyBool,
-    PropertyDataId,
-    PropertyFloat,
-    PropertyInstanceId,
-    PropertyInt,
-    PropertyInt64,
-    PropertyString,
+    Bool,
+    DataId,
+    Float,
+    InstanceId,
+    Int,
+    Int64,
+    String,
 
     //PropertyPosition
 }
@@ -39,13 +39,13 @@ public static class PropertyTypeExtensions
             props = propType switch
             {
                 PropType.Unknown => new int[0],
-                PropType.PropertyBool => GetEnumIntValues<PropertyBool>(),
-                PropType.PropertyDataId => GetEnumIntValues<PropertyDataId>(),
-                PropType.PropertyFloat => GetEnumIntValues<PropertyFloat>(),
-                PropType.PropertyInstanceId => GetEnumIntValues<PropertyInstanceId>(),
-                PropType.PropertyInt => GetEnumIntValues<PropertyInt>(),
-                PropType.PropertyInt64 => GetEnumIntValues<PropertyInt64>(),
-                PropType.PropertyString => GetEnumIntValues<PropertyString>(),
+                PropType.Bool => GetEnumIntValues<PropertyBool>(),
+                PropType.DataId => GetEnumIntValues<PropertyDataId>(),
+                PropType.Float => GetEnumIntValues<PropertyFloat>(),
+                PropType.InstanceId => GetEnumIntValues<PropertyInstanceId>(),
+                PropType.Int => GetEnumIntValues<PropertyInt>(),
+                PropType.Int64 => GetEnumIntValues<PropertyInt64>(),
+                PropType.String => GetEnumIntValues<PropertyString>(),
                 _ => new int[0], //Throw?
             };
         }
@@ -54,13 +54,13 @@ public static class PropertyTypeExtensions
             props = propType switch
             {
                 PropType.Unknown => new int[0],
-                PropType.PropertyBool => target.BoolValues.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyDataId => target.DataValues.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyFloat => target.FloatValues.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyInstanceId => target.InstanceValues.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyInt => target.IntValues.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyInt64 => target.Int64Values.Keys.Select(x => (int)x).ToArray(),
-                PropType.PropertyString => target.StringValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.Bool => target.BoolValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.DataId => target.DataValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.Float => target.FloatValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.InstanceId => target.InstanceValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.Int => target.IntValues.Keys.Select(x => (int)x).ToArray(),
+                PropType.Int64 => target.Int64Values.Keys.Select(x => (int)x).ToArray(),
+                PropType.String => target.StringValues.Keys.Select(x => (int)x).ToArray(),
                 _ => new int[0], //Throw?
             };
         }
@@ -78,13 +78,13 @@ public static class PropertyTypeExtensions
             props = propType switch
             {
                 PropType.Unknown => new string[0],
-                PropType.PropertyBool => Enum.GetNames(typeof(PropertyBool)),
-                PropType.PropertyDataId => Enum.GetNames(typeof(PropertyDataId)),
-                PropType.PropertyFloat => Enum.GetNames(typeof(PropertyFloat)),
-                PropType.PropertyInstanceId => Enum.GetNames(typeof(PropertyInstanceId)),
-                PropType.PropertyInt => Enum.GetNames(typeof(PropertyInt)),
-                PropType.PropertyInt64 => Enum.GetNames(typeof(PropertyInt64)),
-                PropType.PropertyString => Enum.GetNames(typeof(PropertyString)),
+                PropType.Bool => Enum.GetNames(typeof(PropertyBool)),
+                PropType.DataId => Enum.GetNames(typeof(PropertyDataId)),
+                PropType.Float => Enum.GetNames(typeof(PropertyFloat)),
+                PropType.InstanceId => Enum.GetNames(typeof(PropertyInstanceId)),
+                PropType.Int => Enum.GetNames(typeof(PropertyInt)),
+                PropType.Int64 => Enum.GetNames(typeof(PropertyInt64)),
+                PropType.String => Enum.GetNames(typeof(PropertyString)),
                 _ => new string[0], //Throw?
             };
         }
@@ -93,13 +93,13 @@ public static class PropertyTypeExtensions
             props = propType switch
             {
                 PropType.Unknown => new string[0],
-                PropType.PropertyBool => target.BoolValues.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyDataId => target.DataValues.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyFloat => target.FloatValues.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyInstanceId => target.InstanceValues.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyInt => target.IntValues.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyInt64 => target.Int64Values.Keys.Select(x => x.ToString()).ToArray(),
-                PropType.PropertyString => target.StringValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.Bool => target.BoolValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.DataId => target.DataValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.Float => target.FloatValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.InstanceId => target.InstanceValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.Int => target.IntValues.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.Int64 => target.Int64Values.Keys.Select(x => x.ToString()).ToArray(),
+                PropType.String => target.StringValues.Keys.Select(x => x.ToString()).ToArray(),
                 _ => new string[0], //Throw?
             };
         }
@@ -161,31 +161,31 @@ public static class PropertyTypeExtensions
         bool success = true;
         switch (propType)
         {
-            case PropType.PropertyBool:
+            case PropType.Bool:
                 success = target.BoolValues.TryGetValue((BoolId)key, out var targetBool);
                 val = targetBool.ToString();
                 break;
-            case PropType.PropertyDataId:
+            case PropType.DataId:
                 success = target.DataValues.TryGetValue((DataId)key, out var targetDID);
                 val = targetDID.ToString();
                 break;
-            case PropType.PropertyFloat:
+            case PropType.Float:
                 success = target.FloatValues.TryGetValue((FloatId)key, out var targetFloat);
                 val = targetFloat.ToString();
                 break;
-            case PropType.PropertyInstanceId:
+            case PropType.InstanceId:
                 success = target.InstanceValues.TryGetValue((InstanceId)key, out var targetIID);
                 val = targetIID.ToString();
                 break;
-            case PropType.PropertyInt:
+            case PropType.Int:
                 success = target.IntValues.TryGetValue((IntId)key, out var targetInt);
                 val = targetInt.ToString();
                 break;
-            case PropType.PropertyInt64:
+            case PropType.Int64:
                 success = target.Int64Values.TryGetValue((Int64Id)key, out var targetInt64);
                 val = targetInt64.ToString();
                 break;
-            case PropType.PropertyString:
+            case PropType.String:
                 success = target.StringValues.TryGetValue((StringId)key, out var targetString);
                 val = targetString.ToString();
                 break;

@@ -27,7 +27,7 @@ internal class InventoryUI : IDisposable
 
         // set to show our icon in the UBService HudBar
         hud.ShowInBar = true;
-        hud.Visible = false;
+        hud.Visible = true;
 
         // subscribe to the hud render event so we can draw some controls
         hud.OnPreRender += Hud_OnPreRender;

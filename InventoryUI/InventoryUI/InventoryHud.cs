@@ -12,6 +12,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UtilityBelt.Common.Enums;
+using UtilityBelt.Scripting.Actions;
 using UtilityBelt.Scripting.Interop;
 using UtilityBelt.Scripting.Lib;
 using UtilityBelt.Service.Lib.Settings;
@@ -35,16 +36,23 @@ public class InventoryHud : IDisposable
     //Options
     bool ShowBags = false;
     bool ShowIcons;
-    bool ShowExtraFilters;
+    bool ShowExtraFilter = true;
 
-    //Filters?
+    //Filters
+    //Standard name (maybe more?) filter
     string FilterText = "";
-    List<PropertyFilter> filters = new()
+    //Custom filter
+    string[] filterTypes =
     {
-         new(PropType.PropertyString),
-         new(PropType.PropertyFloat),
-         new(PropType.PropertyInt),
+        PropType.Bool.ToString(),
+        PropType.Float.ToString(),
+        PropType.Int.ToString(),
+        PropType.Int64.ToString(),
+        PropType.String.ToString(),
     };
+    int filterComboIndex = 4;
+    PropertyFilter propFilter = new(PropType.String);
+    PropType propType = PropType.String;
 
     //Setup for icon textures
     readonly Vector2 IconSize = new(24, 24);
@@ -168,7 +176,8 @@ public class InventoryHud : IDisposable
 
         ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
         ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
-        ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
+
+        ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
         //ImGui.TableSetupColumn("ObjectClass", COLUMN_FLAGS[3]);
 
         ImGui.TableSetupScrollFreeze(0, 1);
@@ -237,22 +246,22 @@ public class InventoryHud : IDisposable
         //    //Sort if needed?
         //    SortItems();
 
-            foreach (var wo in filteredItems)
-            {
-                ImGui.TableNextRow();
+        foreach (var wo in filteredItems)
+        {
+            ImGui.TableNextRow();
 
-                ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
-                ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
+            ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
+            ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
 
-                ImGui.TableSetColumnIndex((int)ItemColumn.Name);
-                ImGui.Text(wo.Name);
-                DrawItemContextMenu(wo);
+            ImGui.TableSetColumnIndex((int)ItemColumn.Name);
+            ImGui.Text(wo.Name);
+            DrawItemContextMenu(wo);
 
-                ImGui.TableSetColumnIndex((int)ItemColumn.Value);
-                ImGui.Text(wo.Value(IntId.Value).ToString());
-            }
+            ImGui.TableSetColumnIndex((int)ItemColumn.Value);
+            ImGui.Text(wo.Value(IntId.Value).ToString());
+        }
 
-            ImGui.EndTable();
+        ImGui.EndTable();
 
         //}
     }
@@ -266,7 +275,7 @@ public class InventoryHud : IDisposable
             {
                 ImGui.MenuItem("Show Bags", "", ref ShowBags);
                 ImGui.MenuItem("Show Icons", "", ref ShowIcons);
-                ImGui.MenuItem("Show Extra Filters", "", ref ShowExtraFilters);
+                ImGui.MenuItem("Show Extra Filters", "", ref ShowExtraFilter);
 
                 ImGui.EndMenu();
             }
@@ -404,27 +413,57 @@ public class InventoryHud : IDisposable
     #endregion
 
     #region Filters
-    Regex FilterRegex = new("", RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
+    Regex FilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    string customFilterText = "";
+    Regex CustomFilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private void DrawFilter()
     {
         //Basic name filter
         if (ImGui.InputText("Filter", ref FilterText, 512))
         {
-            FilterRegex = new(FilterText, RegexOptions.IgnoreCase | RegexOptions.IgnoreCase);
+            FilterRegex = new(FilterText, RegexOptions.Compiled| RegexOptions.IgnoreCase);
 
             SetFilteredItems();
         }
 
         //Extra filter section
-        if (!ShowExtraFilters) return;
+        if (!ShowExtraFilter) return;
 
-        foreach(var filter in filters)
+        //Render selector
+        ImGui.SetNextItemWidth(100);
+        if (ImGui.Combo("Prop", ref filterComboIndex, filterTypes, filterTypes.Length))
         {
-            filter.Render();
-
-            if(filter.Changed)
-                SetFilteredItems();
+            if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
+            {
+                propFilter = new PropertyFilter(propType);
+                C.Chat($"Custom filter set to: {propType}");
+            }
+            SetFilteredItems();
         }
+        ImGui.SameLine();
+
+        propFilter.Render();
+
+        ImGui.SameLine();
+        if (ImGui.InputText("Value###CFilter", ref customFilterText, 50, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll))
+        {
+            if (propType == PropType.String)
+            {
+                CustomFilterRegex = new(customFilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                C.Chat($"Built regex for {propFilter.Selection}");
+            }
+            else
+            {
+                //Parse comparison
+                //Comp
+            }
+
+            SetFilteredItems();
+        }
+
+
+        if (propFilter.Changed)
+            SetFilteredItems();
     }
 
     //Returns true if an object is filtered given the current options and filters
@@ -440,19 +479,54 @@ public class InventoryHud : IDisposable
                 return true;
         }
 
-        //    --Filter by ObjectType
-        //    if s.ShowExtraFilters and s.UseFilterType and wo.ObjectType ~= s.FilterObjectType then return true end
+        //Filter by prop
+        if (!ShowExtraFilter)
+            return false;
 
-        //    --Filter by Properties
-        //    if s.ShowExtraFilters then-- and s.UsePropertyFilters--just using them if showing
-        //        for index, filter in ipairs(propFilters) do
-        //            --print(filter:TypeName())
-        //            if filter.Enabled and filter.valueRegex ~= nil then
-        //                local val = filter:Value(wo)
-        //                if val == nil or not filter.valueRegex.IsMatch(val) then return true end
-        //            end
-        //        end
-        //    end
+        //Skip missing?
+        //Todo: check logic
+        if (propFilter.Props.Length < 1 || propFilter.EnumIndex is null)
+            return false;
+
+        var key = propFilter.EnumIndex;
+
+        C.Chat($"{propType} - {key} - {propFilter.Selection}");
+
+        switch (propType)
+        {
+            //TODO: Custom comparison
+            case PropType.Bool:
+                if (!wo.BoolValues.TryGetValue((BoolId)key, out var boolVal)
+                    //|| !CustomFilterRegex.IsMatch(value)
+                    )
+                    return true;
+                break;
+            case PropType.Float:
+                if (!wo.FloatValues.TryGetValue((FloatId)key, out var floatVal)
+                    //|| !CustomFilterRegex.IsMatch(value)
+                    )
+                    return true;
+                break;
+            case PropType.Int:
+                if (!wo.IntValues.TryGetValue((IntId)key, out var intVal)
+                    //|| !CustomFilterRegex.IsMatch(value)
+                    )
+                    return true;
+                break;
+            case PropType.Int64:
+                if (!wo.Int64Values.TryGetValue((Int64Id)key, out var longVal)
+                    //|| !CustomFilterRegex.IsMatch(value)
+                    )
+                    return true;
+                break;
+            case PropType.String:
+                //Require value
+                if (!wo.StringValues.TryGetValue((StringId)key, out var value) || !CustomFilterRegex.IsMatch(value))                    
+                    return true;
+                break;
+            default:
+                break;
+        }
 
         return false;
     }
