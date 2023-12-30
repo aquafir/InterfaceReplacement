@@ -109,8 +109,9 @@ public class InventoryHud : IDisposable
     {
         try
         {
+            CheckHotkeys();
             DrawOptions();
-            DrawFilter();
+            DrawFilters();
             DrawInventory();
         }
         catch (Exception ex)
@@ -119,6 +120,27 @@ public class InventoryHud : IDisposable
         }
     }
 
+    private void CheckHotkeys()
+    {
+        //var io = ImGui.GetIO();
+        if(ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
+        {
+            if (ImGui.IsKeyPressed(ImGuiKey.B))
+                ShowBags = !ShowBags;
+            if (ImGui.IsKeyPressed(ImGuiKey.I))
+                ShowIcons = !ShowIcons;
+            if (ImGui.IsKeyPressed(ImGuiKey.E))
+                ShowExtraFilter = !ShowExtraFilter;
+
+
+            if (ImGui.IsKeyPressed(ImGuiKey.F)) {
+                C.Chat("f");
+            }
+
+        }
+    }
+
+    #region Draw Item Icons/Table
     private void DrawInventory()
     {
         Index = 0;
@@ -154,6 +176,18 @@ public class InventoryHud : IDisposable
         }
     }
 
+    /// <summary>
+    /// Draw a bag contents in either table or bag layout
+    /// </summary>
+    private void DrawItems()
+    {
+        //Start the content area for items based on whether icons or a table is used
+        if (ShowIcons)
+            DrawItemsAsIcons();
+        else
+            DrawItemsAsTable();
+    }
+
     private void DrawBagIcon(WorldObject wo)
     {
         if (ImGui.TextureButton($"{wo.Id}", GetOrCreateTexture(wo), IconSize, 0, SelectedBag == wo.Id ? SELECTED_COLOR : UNSELECTED_COLOR))
@@ -168,36 +202,6 @@ public class InventoryHud : IDisposable
 
         DrawBagItemTooltip(wo);
         DrawBagContextMenu(wo);
-    }
-
-    private void BeginBagTable()
-    {
-        ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail());
-
-        ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
-        ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
-
-        ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
-        //ImGui.TableSetupColumn("ObjectClass", COLUMN_FLAGS[3]);
-
-        ImGui.TableSetupScrollFreeze(0, 1);
-        ImGui.TableHeadersRow();
-
-        //Sort if needed?
-        //Checked to make sure after headers is fine
-        SortItems();
-    }
-
-    /// <summary>
-    /// Draw a bag contents in either table or bag layout
-    /// </summary>
-    private void DrawItems()
-    {
-        //Start the content area for items based on whether icons or a table is used
-        if (ShowIcons)
-            DrawItemsAsIcons();
-        else
-            DrawItemsAsTable();
     }
 
     private void DrawItemsAsIcons()
@@ -231,21 +235,6 @@ public class InventoryHud : IDisposable
     {
         BeginBagTable();
 
-        //if (ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail()))
-        //{
-        //    //ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
-        //    //ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name]);
-        //    //ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60);
-        //    ImGui.TableSetupColumn("Icon");//, COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD);
-        //    ImGui.TableSetupColumn("Name");//, COLUMN_FLAGS[ItemColumn.Name]);
-        //    ImGui.TableSetupColumn("Value");//, COLUMN_FLAGS[ItemColumn.Value], 60);
-
-        //    ImGui.TableSetupScrollFreeze(0, 1);
-        //    ImGui.TableHeadersRow();
-
-        //    //Sort if needed?
-        //    SortItems();
-
         foreach (var wo in filteredItems)
         {
             ImGui.TableNextRow();
@@ -258,13 +247,35 @@ public class InventoryHud : IDisposable
             DrawItemContextMenu(wo);
 
             ImGui.TableSetColumnIndex((int)ItemColumn.Value);
-            ImGui.Text(wo.Value(IntId.Value).ToString());
+            if (ShowExtraFilter && propFilter.EnumIndex != null)
+                ImGui.Text(propFilter.FindValue(wo) ?? "");
+            else
+                ImGui.Text(wo.Value(IntId.Value).ToString());
         }
 
         ImGui.EndTable();
-
-        //}
     }
+
+    private void BeginBagTable()
+    {
+        ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail());
+
+        ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
+        ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
+
+        if (ShowExtraFilter && propFilter.EnumIndex != null)
+            ImGui.TableSetupColumn(propFilter.Selection, COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
+        else
+            ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
+
+        ImGui.TableSetupScrollFreeze(0, 1);
+        ImGui.TableHeadersRow();
+
+        //Sort if needed?
+        //Checked to make sure after headers is fine
+        SortItems();
+    }
+    #endregion
 
     #region Menu
     private void DrawOptions()
@@ -416,29 +427,31 @@ public class InventoryHud : IDisposable
     Regex FilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     string customFilterText = "";
     Regex CustomFilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private void DrawFilter()
+    private void DrawFilters()
     {
         //Basic name filter
         if (ImGui.InputText("Filter", ref FilterText, 512))
         {
-            FilterRegex = new(FilterText, RegexOptions.Compiled| RegexOptions.IgnoreCase);
-
+            FilterRegex = new(FilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             SetFilteredItems();
+
+            //if (ShowExtraFilter)
+            //    propFilter.UpdateFilter();
         }
 
         //Extra filter section
         if (!ShowExtraFilter) return;
 
-        //Render selector
-        ImGui.SetNextItemWidth(100);
+        //Render PropType selector
+        ImGui.SetNextItemWidth(80);
         if (ImGui.Combo("Prop", ref filterComboIndex, filterTypes, filterTypes.Length))
         {
             if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
             {
                 propFilter = new PropertyFilter(propType);
+                SetFilteredItems();
                 C.Chat($"Custom filter set to: {propType}");
             }
-            SetFilteredItems();
         }
         ImGui.SameLine();
 
@@ -450,7 +463,7 @@ public class InventoryHud : IDisposable
             if (propType == PropType.String)
             {
                 CustomFilterRegex = new(customFilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                C.Chat($"Built regex for {propFilter.Selection}");
+                //C.Chat($"Built regex for {propFilter.Selection}");
             }
             else
             {
@@ -459,11 +472,15 @@ public class InventoryHud : IDisposable
             }
 
             SetFilteredItems();
+            //UpdateCustomFilter();
         }
 
 
         if (propFilter.Changed)
+        {
             SetFilteredItems();
+            //UpdateCustomFilter();
+        }
     }
 
     //Returns true if an object is filtered given the current options and filters
@@ -490,7 +507,7 @@ public class InventoryHud : IDisposable
 
         var key = propFilter.EnumIndex;
 
-        C.Chat($"{propType} - {key} - {propFilter.Selection}");
+        //C.Chat($"{propType} - {key} - {propFilter.Selection}");
 
         switch (propType)
         {
@@ -521,7 +538,7 @@ public class InventoryHud : IDisposable
                 break;
             case PropType.String:
                 //Require value
-                if (!wo.StringValues.TryGetValue((StringId)key, out var value) || !CustomFilterRegex.IsMatch(value))                    
+                if (!wo.StringValues.TryGetValue((StringId)key, out var value) || !CustomFilterRegex.IsMatch(value))
                     return true;
                 break;
             default:
@@ -538,7 +555,7 @@ public class InventoryHud : IDisposable
         var items = bag is null ? game.Character.Inventory : bag.Items;
 
         filteredItems = items.Where(x => !IsFiltered(x)).ToList();
-        C.Chat($"Rebuild filter {items.Count}->{filteredItems.Count}");
+        //C.Chat($"Rebuild filter {items.Count}->{filteredItems.Count}");
     }
     #endregion
 
@@ -561,7 +578,7 @@ public class InventoryHud : IDisposable
         sortDirection = tableSortSpecs.Specs.SortDirection;
         sortColumn = tableSortSpecs.Specs.ColumnUserID;
 
-        C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
+        //C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
 
         if (sortDirection == ImGuiSortDirection.Ascending)
         {

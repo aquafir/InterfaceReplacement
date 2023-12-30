@@ -112,7 +112,7 @@ public class PropertyTable
             //Set column/direction
             sortDirection = tableSortSpecs.Specs.SortDirection;
             sortColumn = tableSortSpecs.Specs.ColumnUserID;
-            C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
+            //C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
 
             //Todo: do this more better
             var specs = (&tableSortSpecs)->NativePtr;

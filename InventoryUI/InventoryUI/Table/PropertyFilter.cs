@@ -1,5 +1,6 @@
 ﻿using ACEditor.Props;
 
+
 //using Decal.Adapter;
 //using Decal.Adapter.Wrappers;
 using ImGuiNET;
@@ -7,6 +8,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UtilityBelt.Common.Enums;
+using UtilityBelt.Scripting.Interop;
 
 
 namespace ACEditor.Table;
@@ -138,9 +140,35 @@ public class PropertyFilter
         //C.Chat($"Update enum: {EnumIndex ?? 0} - {Type} - {Selection ?? "nil"} - {(EnumIndex ?? -1).ToString()}");
     }
 
-    internal void SetTarget(PropertyData target)
+    /// <summary>
+    /// Set a clone of a WorldObject to limit the Propertys to
+    /// </summary>
+    /// <param name="target"></param>
+    public void SetTarget(PropertyData target)
     {
         Target = target;
         UpdateFilter();
+    }
+
+    /// <summary>
+    /// Tries to find the currently selected value in a WorldObject, null if missing
+    /// </summary>
+    public string FindValue(WorldObject wo)
+    {
+        if (wo is null || EnumIndex is null)
+            return null;
+
+        return Type switch
+        {
+            //PropType.Unknown => wo.BoolValues.TryGetValue((BoolId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.Bool => wo.BoolValues.TryGetValue((BoolId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.DataId => wo.DataValues.TryGetValue((DataId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.Float => wo.FloatValues.TryGetValue((FloatId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.InstanceId => wo.InstanceValues.TryGetValue((InstanceId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.Int => wo.IntValues.TryGetValue((IntId)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.Int64 => wo.Int64Values.TryGetValue((Int64Id)EnumIndex, out var value) ? value.ToString() : null,
+            PropType.String => wo.StringValues.TryGetValue((StringId)EnumIndex, out var value) ? value.ToString() : null,
+            _ => null,
+        };
     }
 }
