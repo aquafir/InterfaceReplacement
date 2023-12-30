@@ -25,7 +25,7 @@ public class PropertyFilter
 
     public bool ShowIncludeMissing { get; set; } = false;
 
-    public int Width = 150;
+    public int Width = 80;
     public bool IncludeMissing = true;
 
     public bool UseFilter { get; set; } = true;
@@ -77,7 +77,8 @@ public class PropertyFilter
             ImGui.SameLine();
         }
 
-        ImGui.SetNextItemWidth(Width);
+        //ImGui.SetNextItemWidth(Width);
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         if (ImGui.Combo($"###{Label}Combo", ref SelectedIndex, Props, Props.Length))
         {
             Changed = true;

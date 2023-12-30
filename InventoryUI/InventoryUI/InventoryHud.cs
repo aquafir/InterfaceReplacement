@@ -8,6 +8,7 @@ using ImGuiNET;
 using InventoryUI.Comparison;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -33,6 +34,8 @@ public class InventoryHud : IDisposable
     private float Index = 0;
     uint SelectedBag = 0;// game.CharacterId,
     List<WorldObject> filteredItems = new();   //Filtered items to be drawn
+
+    bool focusFilter = false;
 
     //Options
     bool ShowBags = false;
@@ -66,7 +69,6 @@ public class InventoryHud : IDisposable
     //Setup for item table
     const ImGuiTableFlags TABLE_FLAGS =
     ImGuiTableFlags.BordersInner | ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.Sortable;
-    //ImGuiTableFlags.ContextMenuInBody | ImGuiTableFlags.Sortable;
     readonly Dictionary<ItemColumn, ImGuiTableColumnFlags> COLUMN_FLAGS = new()
     {
         [ItemColumn.Icon] = ImGuiTableColumnFlags.WidthFixed,
@@ -83,26 +85,36 @@ public class InventoryHud : IDisposable
         SelectedBag = game.CharacterId;
         this.hud = hud;
 
+        game.OnRender2D += Game_OnRender2D;
+
         hud.OnShow += Hud_OnShow;
         //game.World.OnObjectCreated
         game.Messages.Incoming.Qualities_UpdateInstanceID += Incoming_Qualities_UpdateInstanceID;
         game.Messages.Incoming.Qualities_PrivateUpdateInstanceID += Incoming_Qualities_PrivateUpdateInstanceID;
     }
 
+    private void Game_OnRender2D(object sender, EventArgs e)
+    {
+        CheckHotkeys();
+    }
+
     #region Events
     private void Hud_OnShow(object sender, EventArgs e)
     {
-        SetFilteredItems();
+        //SetFilteredItems();
+        UpdateFilters();
     }
 
     private void Incoming_Qualities_PrivateUpdateInstanceID(object sender, UtilityBelt.Common.Messages.Events.Qualities_PrivateUpdateInstanceID_S2C_EventArgs e)
     {
-        SetFilteredItems();
+        //SetFilteredItems();
+        UpdateFilters();
     }
 
     private void Incoming_Qualities_UpdateInstanceID(object sender, UtilityBelt.Common.Messages.Events.Qualities_UpdateInstanceID_S2C_EventArgs e)
     {
-        SetFilteredItems();
+        //SetFilteredItems();
+        UpdateFilters();
     }
     #endregion
 
@@ -110,10 +122,12 @@ public class InventoryHud : IDisposable
     {
         try
         {
-            CheckHotkeys();
+            //var watch = Stopwatch.StartNew();
             DrawOptions();
             DrawFilters();
             DrawInventory();
+            //watch.Stop();
+            //C.Chat($"{watch.ElapsedMilliseconds}ms");
         }
         catch (Exception ex)
         {
@@ -124,20 +138,26 @@ public class InventoryHud : IDisposable
     private void CheckHotkeys()
     {
         //var io = ImGui.GetIO();
-        if(ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
+        if (ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
         {
             if (ImGui.IsKeyPressed(ImGuiKey.B))
                 ShowBags = !ShowBags;
-            if (ImGui.IsKeyPressed(ImGuiKey.I))
-                ShowIcons = !ShowIcons;
             if (ImGui.IsKeyPressed(ImGuiKey.E))
                 ShowExtraFilter = !ShowExtraFilter;
 
-
-            if (ImGui.IsKeyPressed(ImGuiKey.F)) {
-                C.Chat("f");
+            if (ImGui.IsKeyPressed(ImGuiKey.I))
+            {
+                //ShowIcons = !ShowIcons;
+                hud.Visible = !hud.Visible;
             }
+            if (ImGui.IsKeyPressed(ImGuiKey.F))
+            {
+                focusFilter = true;
 
+
+                if (!hud.Visible)
+                    hud.Visible = true;
+            }
         }
     }
 
@@ -218,9 +238,6 @@ public class InventoryHud : IDisposable
         int index = 0;
         foreach (var wo in filteredItems)
         {
-            if (IsFiltered(wo))
-                continue;
-
             //Move on to next row?
             if (index % columns != 0)
                 ImGui.SameLine();
@@ -247,11 +264,15 @@ public class InventoryHud : IDisposable
             ImGui.Text(wo.Name);
             DrawItemContextMenu(wo);
 
-            ImGui.TableSetColumnIndex((int)ItemColumn.Value);
             if (ShowExtraFilter && propFilter.EnumIndex != null)
+            {
+                ImGui.TableSetColumnIndex((int)ItemColumn.Value);
                 ImGui.Text(propFilter.FindValue(wo) ?? "");
-            else
-                ImGui.Text(wo.Value(IntId.Value).ToString());
+            }
+            //if (ShowExtraFilter && propFilter.EnumIndex != null)
+            //    ImGui.Text(propFilter.FindValue(wo) ?? "");
+            //else
+            //    ImGui.Text(wo.Value(IntId.Value).ToString());
         }
 
         ImGui.EndTable();
@@ -259,15 +280,15 @@ public class InventoryHud : IDisposable
 
     private void BeginBagTable()
     {
-        ImGui.BeginTable("items-table", COLUMN_FLAGS.Count, TABLE_FLAGS, ImGui.GetContentRegionAvail());
+        ImGui.BeginTable("items-table", ShowExtraFilter ? COLUMN_FLAGS.Count : COLUMN_FLAGS.Count - 1, TABLE_FLAGS, ImGui.GetContentRegionAvail());
 
-        ImGui.TableSetupColumn("###Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
+        ImGui.TableSetupColumn("Icon", COLUMN_FLAGS[ItemColumn.Icon], IconSize.X + ICON_PAD, (int)ItemColumn.Icon);
         ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
 
         if (ShowExtraFilter && propFilter.EnumIndex != null)
             ImGui.TableSetupColumn(propFilter.Selection, COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
-        else
-            ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
+        //else
+        //    ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
 
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableHeadersRow();
@@ -435,7 +456,14 @@ public class InventoryHud : IDisposable
     private void DrawFilters()
     {
         //Basic name filter
-        if (ImGui.InputText("Filter", ref FilterText, 512))
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 45);
+        if(focusFilter)
+        {
+            focusFilter = false;
+            ImGui.SetKeyboardFocusHere();
+        }
+
+        if (ImGui.InputText("Filter", ref FilterText, 512, ImGuiInputTextFlags.AutoSelectAll))
         {
             FilterRegex = new(FilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             SetFilteredItems();
@@ -461,8 +489,8 @@ public class InventoryHud : IDisposable
             changed = true;
         }
 
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         ImGui.SameLine();
-
         propFilter.Render();
 
         ImGui.SameLine();
@@ -477,9 +505,11 @@ public class InventoryHud : IDisposable
         }
 
         if (changed)
+        {
+            C.Chat("Updating filters");
             UpdateFilters();
+        }
     }
-
 
     private void UpdateFilters()
     {
@@ -526,8 +556,9 @@ public class InventoryHud : IDisposable
         //propFilter.Changed = false;
     }
 
-
-    //Returns true if an object is filtered given the current options and filters
+    /// <summary>
+    /// Returns true if an object is filtered given the current options and filters
+    /// </summary>
     private bool IsFiltered(WorldObject wo)
     {
         if (!wo.HasAppraisalData)
@@ -564,15 +595,15 @@ public class InventoryHud : IDisposable
                 //If there's a value req try to satisfy it
                 if (valueRequirement is null)
                     return false;
-
                 return !valueRequirement.VerifyRequirement(wo);
-                break;
         }
 
         return false;
     }
 
-    //Filter list
+    /// <summary>
+    /// Creates a filtered list of WorldObjects for the current bag view
+    /// </summary>
     private void SetFilteredItems()
     {
         var bag = game.World.Get(SelectedBag);

@@ -39,7 +39,7 @@ public class ValueRequirement
         if (normalizedValue is null)
             return false;
 
-        C.Chat($"Verifying {PropType}({PropKey}): {normalizedValue} {Type} {TargetValue}");
+        //C.Chat($"Verifying {PropType}({PropKey}): {normalizedValue} {Type} {TargetValue}");
 
         return VerifyRequirement(normalizedValue);
     }
