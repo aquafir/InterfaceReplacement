@@ -1,4 +1,5 @@
-﻿using ACEditor.Props;
+﻿using ACEditor;
+using ACEditor.Props;
 using System;
 using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Interop;
@@ -43,6 +44,8 @@ public class ValueRequirement
             PropType.Int64 => item.Int64Values.TryGetValue((Int64Id)PropKey, out var value) ? value.Normalize() : null,
             _ => null,
         };
+        //C.Chat($"Verifying {PropType}({PropKey}): {normalizedValue} {Type} {TargetValue}");
+
         return VerifyRequirement(normalizedValue);
     }
 

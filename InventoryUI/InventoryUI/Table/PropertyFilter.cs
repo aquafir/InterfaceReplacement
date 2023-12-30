@@ -118,7 +118,6 @@ public class PropertyFilter
             Props = Props.Where(x => regex.IsMatch(x)).ToArray();
         }
 
-
         //Find the enum index if possible
         if (String.IsNullOrEmpty(Selection))
             return;

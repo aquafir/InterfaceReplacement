@@ -5,6 +5,7 @@ using ACEditor.Table;
 using Decal.Adapter;
 using Decal.Adapter.Wrappers;
 using ImGuiNET;
+using InventoryUI.Comparison;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,9 +51,9 @@ public class InventoryHud : IDisposable
         PropType.Int64.ToString(),
         PropType.String.ToString(),
     };
-    int filterComboIndex = 4;
-    PropertyFilter propFilter = new(PropType.String);
-    PropType propType = PropType.String;
+    int filterComboIndex = 2;
+    PropertyFilter propFilter = new(PropType.Int);
+    PropType propType = PropType.Int;
 
     //Setup for icon textures
     readonly Vector2 IconSize = new(24, 24);
@@ -264,9 +265,9 @@ public class InventoryHud : IDisposable
         ImGui.TableSetupColumn("Name", COLUMN_FLAGS[ItemColumn.Name], 0, (int)ItemColumn.Name);
 
         if (ShowExtraFilter && propFilter.EnumIndex != null)
-            ImGui.TableSetupColumn(propFilter.Selection, COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
+            ImGui.TableSetupColumn(propFilter.Selection, COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
         else
-            ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 20, (int)ItemColumn.Value);
+            ImGui.TableSetupColumn("Value", COLUMN_FLAGS[ItemColumn.Value], 60, (int)ItemColumn.Value);
 
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableHeadersRow();
@@ -427,6 +428,10 @@ public class InventoryHud : IDisposable
     Regex FilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     string customFilterText = "";
     Regex CustomFilterRegex = new("", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    const string valueReqPattern = @"^(>=?|<=?|!=\?{0,2}|==|\?{1,2}|!B|B)(.*)";
+    Regex ValueReqRegex = new(valueReqPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    ValueRequirement valueRequirement;
     private void DrawFilters()
     {
         //Basic name filter
@@ -463,12 +468,29 @@ public class InventoryHud : IDisposable
             if (propType == PropType.String)
             {
                 CustomFilterRegex = new(customFilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                //C.Chat($"Built regex for {propFilter.Selection}");
+                C.Chat($"Built regex for {propFilter.Selection}");
             }
             else
             {
-                //Parse comparison
-                //Comp
+                //Try to parse a comparison and value
+                var match = ValueReqRegex.Match(customFilterText);
+
+                if (match.Success && double.TryParse(match.Groups[2].Value, out var result) && CompareExtensions.TryParse(match.Groups[1].Value, out var comparison))
+                {
+                    valueRequirement = new()
+                    {
+                        PropType = propType,
+                        Type = comparison,
+                        TargetValue = result,
+                    };
+                    C.Chat($"Parsed value requirement: {comparison} - {result}");
+
+                }
+                else
+                {
+                    valueRequirement = null;
+                    //C.Chat($"{match.Success}");
+                }
             }
 
             SetFilteredItems();
@@ -482,6 +504,57 @@ public class InventoryHud : IDisposable
             //UpdateCustomFilter();
         }
     }
+
+    private void UpdateFilters()
+    {
+        //Rebuild basic filter regex
+        FilterRegex = new(FilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        //ExtraFilter stuff
+        if (ShowExtraFilter)
+        {
+            //Parse PropType from combo
+            if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
+            {
+                propFilter = new PropertyFilter(propType);
+                SetFilteredItems();
+                C.Chat($"Custom filter set to: {propType}");
+            }
+
+            //Set up custom filter for either a string or a ValueRequirement
+            if (propType == PropType.String)
+            {
+                CustomFilterRegex = new(customFilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                C.Chat($"Built regex for {propFilter.Selection}");
+            }
+            else
+            {
+                //Try to parse a comparison and value
+                var match = ValueReqRegex.Match(customFilterText);
+
+                if (match.Success && double.TryParse(match.Groups[2].Value, out var result) && CompareExtensions.TryParse(match.Groups[1].Value, out var comparison))
+                {
+                    valueRequirement = new()
+                    {
+                        PropType = propType,
+                        Type = comparison,
+                        TargetValue = result,
+                    };
+                    C.Chat($"Parsed value requirement: {comparison} - {result}");
+
+                }
+                else
+                {
+                    valueRequirement = null;
+                    //C.Chat($"{match.Success}");
+                }
+            }
+        }
+        //Todo: null if extra filters unused?
+
+        SetFilteredItems();
+    }
+
 
     //Returns true if an object is filtered given the current options and filters
     private bool IsFiltered(WorldObject wo)
@@ -512,36 +585,42 @@ public class InventoryHud : IDisposable
         switch (propType)
         {
             //TODO: Custom comparison
-            case PropType.Bool:
-                if (!wo.BoolValues.TryGetValue((BoolId)key, out var boolVal)
-                    //|| !CustomFilterRegex.IsMatch(value)
-                    )
-                    return true;
-                break;
-            case PropType.Float:
-                if (!wo.FloatValues.TryGetValue((FloatId)key, out var floatVal)
-                    //|| !CustomFilterRegex.IsMatch(value)
-                    )
-                    return true;
-                break;
-            case PropType.Int:
-                if (!wo.IntValues.TryGetValue((IntId)key, out var intVal)
-                    //|| !CustomFilterRegex.IsMatch(value)
-                    )
-                    return true;
-                break;
-            case PropType.Int64:
-                if (!wo.Int64Values.TryGetValue((Int64Id)key, out var longVal)
-                    //|| !CustomFilterRegex.IsMatch(value)
-                    )
-                    return true;
-                break;
+            //case PropType.Bool:
+            //    if (!wo.BoolValues.TryGetValue((BoolId)key, out var boolVal)
+            //        //|| !CustomFilterRegex.IsMatch(value)
+            //        )
+            //        return true;
+            //    break;
+            //case PropType.Float:
+            //    if (!wo.FloatValues.TryGetValue((FloatId)key, out var floatVal)
+            //        //|| !CustomFilterRegex.IsMatch(value)
+            //        )
+            //        return true;
+            //    break;
+            //case PropType.Int:
+            //    if (!wo.IntValues.TryGetValue((IntId)key, out var intVal)
+            //        //|| !CustomFilterRegex.IsMatch(value)
+            //        )
+            //        return true;
+            //    break;
+            //case PropType.Int64:
+            //    if (!wo.Int64Values.TryGetValue((Int64Id)key, out var longVal)
+            //        //|| !CustomFilterRegex.IsMatch(value)
+            //        )
+            //        return true;
+            //    break;
             case PropType.String:
                 //Require value
                 if (!wo.StringValues.TryGetValue((StringId)key, out var value) || !CustomFilterRegex.IsMatch(value))
                     return true;
                 break;
             default:
+                //If there's a value req try to satisfy it
+                if (valueRequirement is null)
+                    return false;
+
+                var verified = valueRequirement.VerifyRequirement(wo);
+                return verified;
                 break;
         }
 
