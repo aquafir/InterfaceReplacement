@@ -439,71 +439,47 @@ public class InventoryHud : IDisposable
         {
             FilterRegex = new(FilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             SetFilteredItems();
-
-            //if (ShowExtraFilter)
-            //    propFilter.UpdateFilter();
         }
 
         //Extra filter section
         if (!ShowExtraFilter) return;
 
+        bool changed = false;
+
         //Render PropType selector
         ImGui.SetNextItemWidth(80);
         if (ImGui.Combo("Prop", ref filterComboIndex, filterTypes, filterTypes.Length))
         {
+            //Parse PropType from combo.  Do here to prevent PropFilter change refresh
             if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
             {
                 propFilter = new PropertyFilter(propType);
                 SetFilteredItems();
                 C.Chat($"Custom filter set to: {propType}");
             }
+
+            changed = true;
         }
+
         ImGui.SameLine();
 
         propFilter.Render();
 
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         if (ImGui.InputText("Value###CFilter", ref customFilterText, 50, ImGuiInputTextFlags.AllowTabInput | ImGuiInputTextFlags.AutoSelectAll))
-        {
-            if (propType == PropType.String)
-            {
-                CustomFilterRegex = new(customFilterText, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                C.Chat($"Built regex for {propFilter.Selection}");
-            }
-            else
-            {
-                //Try to parse a comparison and value
-                var match = ValueReqRegex.Match(customFilterText);
-
-                if (match.Success && double.TryParse(match.Groups[2].Value, out var result) && CompareExtensions.TryParse(match.Groups[1].Value, out var comparison))
-                {
-                    valueRequirement = new()
-                    {
-                        PropType = propType,
-                        Type = comparison,
-                        TargetValue = result,
-                    };
-                    C.Chat($"Parsed value requirement: {comparison} - {result}");
-
-                }
-                else
-                {
-                    valueRequirement = null;
-                    //C.Chat($"{match.Success}");
-                }
-            }
-
-            SetFilteredItems();
-            //UpdateCustomFilter();
-        }
-
+            changed = true;
 
         if (propFilter.Changed)
         {
-            SetFilteredItems();
-            //UpdateCustomFilter();
+            changed = true;
+            propFilter.Changed = false;
         }
+
+        if (changed)
+            UpdateFilters();
     }
+
 
     private void UpdateFilters()
     {
@@ -513,14 +489,6 @@ public class InventoryHud : IDisposable
         //ExtraFilter stuff
         if (ShowExtraFilter)
         {
-            //Parse PropType from combo
-            if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
-            {
-                propFilter = new PropertyFilter(propType);
-                SetFilteredItems();
-                C.Chat($"Custom filter set to: {propType}");
-            }
-
             //Set up custom filter for either a string or a ValueRequirement
             if (propType == PropType.String)
             {
@@ -539,8 +507,9 @@ public class InventoryHud : IDisposable
                         PropType = propType,
                         Type = comparison,
                         TargetValue = result,
+                        PropKey = propFilter.EnumIndex ?? 0,
                     };
-                    C.Chat($"Parsed value requirement: {comparison} - {result}");
+                    C.Chat($"Parsed value requirement: {propType} - {comparison} - {result}");
 
                 }
                 else
@@ -553,6 +522,8 @@ public class InventoryHud : IDisposable
         //Todo: null if extra filters unused?
 
         SetFilteredItems();
+
+        //propFilter.Changed = false;
     }
 
 
@@ -584,31 +555,6 @@ public class InventoryHud : IDisposable
 
         switch (propType)
         {
-            //TODO: Custom comparison
-            //case PropType.Bool:
-            //    if (!wo.BoolValues.TryGetValue((BoolId)key, out var boolVal)
-            //        //|| !CustomFilterRegex.IsMatch(value)
-            //        )
-            //        return true;
-            //    break;
-            //case PropType.Float:
-            //    if (!wo.FloatValues.TryGetValue((FloatId)key, out var floatVal)
-            //        //|| !CustomFilterRegex.IsMatch(value)
-            //        )
-            //        return true;
-            //    break;
-            //case PropType.Int:
-            //    if (!wo.IntValues.TryGetValue((IntId)key, out var intVal)
-            //        //|| !CustomFilterRegex.IsMatch(value)
-            //        )
-            //        return true;
-            //    break;
-            //case PropType.Int64:
-            //    if (!wo.Int64Values.TryGetValue((Int64Id)key, out var longVal)
-            //        //|| !CustomFilterRegex.IsMatch(value)
-            //        )
-            //        return true;
-            //    break;
             case PropType.String:
                 //Require value
                 if (!wo.StringValues.TryGetValue((StringId)key, out var value) || !CustomFilterRegex.IsMatch(value))
@@ -619,8 +565,7 @@ public class InventoryHud : IDisposable
                 if (valueRequirement is null)
                     return false;
 
-                var verified = valueRequirement.VerifyRequirement(wo);
-                return verified;
+                return !valueRequirement.VerifyRequirement(wo);
                 break;
         }
 
@@ -646,10 +591,8 @@ public class InventoryHud : IDisposable
     //Sort if needed
     private void SortItems()
     {
-        var tableSortSpecs = ImGui.TableGetSortSpecs();
-        //return;
-
         //Check if a sort is needed
+        var tableSortSpecs = ImGui.TableGetSortSpecs();
         if (!tableSortSpecs.SpecsDirty)
             return;
 
@@ -659,12 +602,18 @@ public class InventoryHud : IDisposable
 
         //C.Chat($"Dirty: {sortDirection} - {tableSortSpecs.Specs.ColumnUserID}");
 
+        //Handle sorting
         if (sortDirection == ImGuiSortDirection.Ascending)
         {
             filteredItems = sortColumn switch
             {
                 1 => filteredItems.OrderBy(x => x.Name).ToList(),
-                2 => filteredItems.OrderBy(x => x.Value(IntId.Value)).ToList(),
+                //Default to value
+                2 when !ShowExtraFilter => filteredItems.OrderBy(x => x.Value(IntId.Value)).ToList(),
+                //StringProp
+                2 when valueRequirement is null => filteredItems.OrderBy(x => propFilter.FindValue(x) ?? "").ToList(),
+                //Value requirement available
+                2 => filteredItems.OrderBy(x => valueRequirement.GetNormalizeValue(x)).ToList(),
                 _ => filteredItems,
             };
         }
@@ -673,22 +622,15 @@ public class InventoryHud : IDisposable
             filteredItems = sortColumn switch
             {
                 1 => filteredItems.OrderByDescending(x => x.Name).ToList(),
-                2 => filteredItems.OrderByDescending(x => x.Value(IntId.Value)).ToList(),
+                //Default to value
+                2 when !ShowExtraFilter => filteredItems.OrderByDescending(x => x.Value(IntId.Value)).ToList(),
+                //StringProp
+                2 when valueRequirement is null => filteredItems.OrderByDescending(x => propFilter.FindValue(x) ?? "").ToList(),
+                //Value requirement available
+                2 => filteredItems.OrderByDescending(x => valueRequirement.GetNormalizeValue(x)).ToList(),
                 _ => filteredItems,
             };
         }
-
-        //filteredItems = sortDirection == ImGuiSortDirection.Descending ?
-        //    sortColumn switch
-        //    {
-        //        _ => throw new global::System.NotImplementedException(),
-        //    } :
-        //                sortColumn switch
-        //                {
-        //                    _ => throw new global::System.NotImplementedException(),
-        //                };
-        //ImGuiSortDirection.Ascending? filteredItems.OrderBy(x => CompareTableRows(x.Comp)
-
 
         //Data has been sorted
         tableSortSpecs.SpecsDirty = false;

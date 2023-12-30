@@ -89,9 +89,7 @@ public class PropertyFilter
             //ImGui.SameLine();
 
             if (ImGui.InputText($"{Name}###{Label}Filter", ref FilterText, 256))
-            {
                 UpdateFilter();
-            }
         }
 
         if (ShowIncludeMissing)

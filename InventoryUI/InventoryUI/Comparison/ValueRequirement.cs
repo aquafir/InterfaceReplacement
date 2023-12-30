@@ -34,7 +34,18 @@ public class ValueRequirement
     public bool VerifyRequirement(WorldObject item)
     {
         //Null or double value
-        double? normalizedValue = PropType switch
+        double? normalizedValue = GetNormalizeValue(item);
+
+        if (normalizedValue is null)
+            return false;
+
+        C.Chat($"Verifying {PropType}({PropKey}): {normalizedValue} {Type} {TargetValue}");
+
+        return VerifyRequirement(normalizedValue);
+    }
+
+    public double? GetNormalizeValue(WorldObject item) =>
+        PropType switch
         {
             PropType.Bool => item.BoolValues.TryGetValue((BoolId)PropKey, out var value) ? value.Normalize() : null,
             PropType.DataId => item.DataValues.TryGetValue((DataId)PropKey, out var value) ? value.Normalize() : null,
@@ -44,10 +55,6 @@ public class ValueRequirement
             PropType.Int64 => item.Int64Values.TryGetValue((Int64Id)PropKey, out var value) ? value.Normalize() : null,
             _ => null,
         };
-        //C.Chat($"Verifying {PropType}({PropKey}): {normalizedValue} {Type} {TargetValue}");
-
-        return VerifyRequirement(normalizedValue);
-    }
 
     /// <summary>
     /// True if a WorldObject's value succeeds in a comparison with a target value
