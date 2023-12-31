@@ -46,8 +46,6 @@ public class PropertyFilter
     /// </summary>
     public int? EnumIndex = null;
 
-
-
     //Name of Property Enum keys
     public string[] Props { get; set; } = new string[0];
     //Value of Property Enum

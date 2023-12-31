@@ -1,6 +1,4 @@
-﻿using ACEditor;
-using ACEditor.Props;
-using System;
+﻿using ACEditor.Props;
 using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Interop;
 

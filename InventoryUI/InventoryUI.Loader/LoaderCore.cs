@@ -1,9 +1,7 @@
 ﻿using Decal.Adapter;
-using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace InventoryUI;
 [FriendlyName("InventoryUI.Loader")]
