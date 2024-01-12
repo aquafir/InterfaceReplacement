@@ -34,7 +34,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="UtilityBelt.Service" Version="2.2.2">
+    <PackageReference Include="UtilityBelt.Service" Version="2.2.3">
       <ExcludeAssets>runtime; build;</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

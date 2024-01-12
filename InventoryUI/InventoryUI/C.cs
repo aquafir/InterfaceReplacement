@@ -1,6 +1,6 @@
 ﻿using Decal.Adapter;
 
-namespace ACEditor;
+namespace InventoryUI;
 
 public static class C
 {

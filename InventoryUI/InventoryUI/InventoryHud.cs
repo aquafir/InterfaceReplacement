@@ -1,8 +1,6 @@
 ﻿using AcClient;
-using ACEditor;
 using ACEditor.Props;
 using ACEditor.Table;
-using Decal.Adapter;
 using ImGuiNET;
 using InventoryUI.Comparison;
 using System;
@@ -14,12 +12,11 @@ using System.Text.RegularExpressions;
 using UtilityBelt.Common.Enums;
 using UtilityBelt.Scripting.Enums;
 using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Scripting.Lib;
-using UtilityBelt.Service;
 using UtilityBelt.Service.Views;
 using Hud = UtilityBelt.Service.Views.Hud;
 using Vector4 = System.Numerics.Vector4;
 using WorldObject = UtilityBelt.Scripting.Interop.WorldObject;
+using InventoryUI.Textures;
 
 namespace InventoryUI;
 
@@ -30,7 +27,9 @@ public class InventoryHud : IDisposable
     readonly Hud hud;
     Game game = new();
     private float Index = 0;
-    uint SelectedBag = 0;// game.CharacterId,
+    uint SelectedBag = 0;
+    uint SelectedItem = 0;
+
     List<WorldObject> filteredItems = new();   //Filtered items to be drawn
 
     /// <summary>
@@ -43,11 +42,11 @@ public class InventoryHud : IDisposable
     bool refreshHud = false;
 
     //Options
-    bool showBags = false;
+    bool showBags;
     bool showIcons;
-    bool showExtraFilter = true;
+    bool showExtraFilter;
     bool showGroupActions = true;
-    bool showEquipment = true;
+    bool showEquipment;
 
     #region Filter Setup
     //Standard name (maybe more?) filter
@@ -78,7 +77,6 @@ public class InventoryHud : IDisposable
     readonly Vector2 IconSize = new(24, 24);
     const int ICON_PAD = 8;
     const int ICON_COL_WIDTH = 24 + ICON_PAD;
-    const int PLAYER_ICON = 0x0600127E;
     Vector4 SELECTED_COLOR = new(200, 200, 0, 255);
     Vector4 UNSELECTED_COLOR = new(0, 0, 0, 0);
 
@@ -208,7 +206,7 @@ public class InventoryHud : IDisposable
 
     void DrawItemIcon(WorldObject wo)
     {
-        var texture = GetOrCreateTexture(wo);
+        var texture = wo.GetOrCreateTexture();
         ImGui.TextureButton($"{wo.Id}", texture, IconSize);
 
         DrawItemTooltip(wo);
@@ -223,6 +221,29 @@ public class InventoryHud : IDisposable
         if (!showEquipment)
             return;
 
+        EquipmentHelper.DrawEquipment();
+//        function ToHex(num) return "0x"..string.format("%08x", num) end
+
+//for i, armor in ipairs(game.Character.Equipment) do
+//                local armorMask = EquipMask.FromValue(armor.Value(IntId.CurrentWieldedLocation))
+//  print(armor, ToHex(armorMask.ToNumber()), armorMask)
+//  for i, mask in ipairs(EquipMask.GetValues()) do
+//                if mask ~= EquipMask.None and armorMask + mask == armorMask then
+//      print("  - "..ToHex(mask.ToNumber())..":"..tostring(mask))
+//    end
+//  end
+//end
+
+        //foreach(var equip in game.Character.Equipment)
+        //{
+        //    var locs = equip.CurrentWieldedLocation;
+        //    //EquipMask
+        //}
+
+        //if (ImGui.TextureButton($"{Texture.EquipNecklace}", Texture.EquipNecklace.GetOrCreateTexture(), IconSize, 0, SelectedItem == wo.Id ? SELECTED_COLOR : UNSELECTED_COLOR))
+        //{
+
+        //}
 
     }
 
@@ -396,8 +417,9 @@ public class InventoryHud : IDisposable
     /// </summary>
     private void SetFilteredItems()
     {
+        //If a bag is selected and available use the items in it, otherwise use the inventory
         var bag = game.World.Get(SelectedBag);
-        var items = bag is null ? game.Character.Inventory : bag.Items;
+        var items = !showBags || bag is null ? game.Character.Inventory : bag.Items;
 
         filteredItems = items.Where(x => !IsFiltered(x)).ToList();
         //C.Chat($"Rebuild filter {items.Count}->{filteredItems.Count}");
@@ -454,7 +476,7 @@ public class InventoryHud : IDisposable
 
     private void DrawBagIcon(WorldObject wo)
     {
-        if (ImGui.TextureButton($"{wo.Id}", GetOrCreateTexture(wo), IconSize, 0, SelectedBag == wo.Id ? SELECTED_COLOR : UNSELECTED_COLOR))
+        if (ImGui.TextureButton($"{wo.Id}", wo.GetOrCreateTexture(), IconSize, 0, SelectedBag == wo.Id ? SELECTED_COLOR : UNSELECTED_COLOR))
         {
             //Store selected bag
             SelectedBag = wo.Id;
@@ -501,7 +523,7 @@ public class InventoryHud : IDisposable
             ImGui.TableNextRow();
 
             ImGui.TableSetColumnIndex((int)ItemColumn.Icon);
-            ImGui.TextureButton(wo.Id.ToString(), GetOrCreateTexture(wo), IconSize);
+            ImGui.TextureButton(wo.Id.ToString(), wo.GetOrCreateTexture(), IconSize);
 
             ImGui.TableSetColumnIndex((int)ItemColumn.Name);
             ImGui.Text(wo.Name);
@@ -660,7 +682,7 @@ public class InventoryHud : IDisposable
     /// </summary>
     private void DrawItemTooltip(WorldObject wo)
     {
-        var texture = GetOrCreateTexture(wo);
+        var texture = wo.GetOrCreateTexture();
 
         if (ImGui.IsItemHovered())
         {
@@ -700,10 +722,30 @@ public class InventoryHud : IDisposable
         //}
     }
 
+    ActionOptions quickFail = new()
+    {
+        MaxRetryCount = 0,
+        TimeoutMilliseconds = 100,
+    };
     private unsafe void FastGiveAll()
     {
         if (game.World.Selected is null)
             return;
+
+
+        if (game.World.Selected.ObjectType == ObjectType.Container)
+        {
+            C.Chat($"Moving items to {game.World.Selected.Name}");
+            foreach (var item in filteredItems)
+                //game.Actions.ObjectMove(item.Id, game.World.Selected.Id);
+                item.Move(game.World.Selected.Id, 0, true, quickFail);
+
+        }
+        else
+            foreach (var item in filteredItems)
+                item.Give(game.World.Selected.Id);
+
+        return;
         foreach (var item in filteredItems)
         {
             using (var stream = new MemoryStream())
@@ -779,24 +821,7 @@ public class InventoryHud : IDisposable
     #endregion
 
     #region Utility
-    readonly Dictionary<uint, ManagedTexture> _woTextures = new();
-    /// <summary>
-    /// Get or create a managed texture for a world object
-    /// </summary>
-    private ManagedTexture GetOrCreateTexture(WorldObject wo)
-    {
-        if (!_woTextures.TryGetValue(wo.WeenieClassId, out var texture))
-        {
-            if (wo.Id == game.Character.Id)
-                texture = sHud.GetIconTexture(PLAYER_ICON);
-            else
-                texture = sHud.GetIconTexture(wo.Value(DataId.Icon));
 
-            _woTextures.AddOrUpdate(wo.WeenieClassId, texture);
-        }
-
-        return texture;
-    }
 
     private bool TryGetNearest(out WorldObject wo)
     {

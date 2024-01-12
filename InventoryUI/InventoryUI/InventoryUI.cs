@@ -1,5 +1,4 @@
 ﻿using AcClient;
-using ACEditor;
 using ImGuiNET;
 using System;
 using System.IO;
@@ -25,7 +24,6 @@ internal class InventoryUI : IDisposable
 
     public InventoryUI()
     {
-        //g.World.OnChatInput += World_OnChatInput;
         
         // Create a new UBService Hud
         hud = UBService.Huds.CreateHud("InventoryUI");
@@ -35,38 +33,47 @@ internal class InventoryUI : IDisposable
         hud.ShowInBar = true;
         hud.Visible = true;
 
-        // subscribe to the hud render event so we can draw some controls
-        hud.OnPreRender += Hud_OnPreRender;
-        hud.OnRender += Hud_OnRender;
-
         backpack = new(hud);
+
+        AddEvents();
     }
 
-    //unsafe private void World_OnChatInput(object sender, UtilityBelt.Scripting.Events.ChatInputEventArgs e)
-    //{
-    //    if (e.Text != "/qd")
-    //        return;
+    unsafe private void World_OnChatInput(object sender, UtilityBelt.Scripting.Events.ChatInputEventArgs e)
+    {
+        if (e.Text != "/t1")
+            return;
 
-    //    C.Chat($"Dropping all");
-    //    e.Eat = true;
-    //    //foreach (var item in UBService.Scripts.GameState.Character.Weenie.AllItemIds)
-    //    foreach (var item in g.Character.Inventory.Select(x => x.Id))
-    //    {
-    //        using (var stream = new MemoryStream())
-    //        using (var writer = new BinaryWriter(stream))
-    //        {
-    //            writer.Write((uint)0xF7B1); // order header
-    //            writer.Write((uint)0x0); // sequence.. ace doesnt verify this
-    //            writer.Write((uint)0x001B); // drop item
-    //            writer.Write((uint)item);
-    //            var bytes = stream.ToArray();
-    //            fixed (byte* bytesPtr = bytes)
-    //            {
-    //                Proto_UI.SendToControl((char*)bytesPtr, bytes.Length);
-    //            }
-    //        }
-    //    }
-    //}
+        Game g = new();
+        var s = g.World.Selected;
+        if (s is null)
+            return;
+
+        
+        C.Chat($"{s.Name} - {s.ValidWieldedLocations}");
+        e.Eat = true;
+
+
+
+
+        return;
+        //foreach (var item in UBService.Scripts.GameState.Character.Weenie.AllItemIds)
+        foreach (var item in g.Character.Inventory.Select(x => x.Id))
+        {
+            using (var stream = new MemoryStream())
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write((uint)0xF7B1); // order header
+                writer.Write((uint)0x0); // sequence.. ace doesnt verify this
+                writer.Write((uint)0x001B); // drop item
+                writer.Write((uint)item);
+                var bytes = stream.ToArray();
+                fixed (byte* bytesPtr = bytes)
+                {
+                    Proto_UI.SendToControl((char*)bytesPtr, bytes.Length);
+                }
+            }
+        }
+    }
 
     private void Hud_OnPreRender(object sender, EventArgs e)
     {
@@ -80,22 +87,45 @@ internal class InventoryUI : IDisposable
     {
         try
         {
-            backpack.Draw();
+            backpack?.Draw();
         }
         catch (Exception ex)
         {
             PluginCore.Log(ex);
-            //PluginCore.Log($"EX:\n{ex.Message}\nInner:{ex.InnerException}\nStack{ex.StackTrace}");
         }
+    }
+
+    private void AddEvents() {
+        hud.OnPreRender += Hud_OnPreRender;
+        hud.OnRender += Hud_OnRender;
+        g.World.OnChatInput += World_OnChatInput;
+    }
+
+    private void RemoveEvents()
+    {
+        try
+        {
+            if (g is not null)
+                g.World.OnChatInput -= World_OnChatInput;
+
+            //hud.OnPreRender -= Hud_OnPreRender;
+            //hud.OnRender -= Hud_OnRender;
+        }catch(Exception ex) { PluginCore.Log(ex); }
     }
 
     public void Dispose()
     {
         try
         {
+            //PluginCore.Log("Disposing InvUI");
+            RemoveEvents();
+            //PluginCore.Log("Removed events");
             backpack?.Dispose();
+            //PluginCore.Log("Disposed backpack");
             hud?.Dispose();
-        }catch(Exception ex)
+            //PluginCore.Log("Disposed HUD");
+        }
+        catch(Exception ex)
         {
 
         }
