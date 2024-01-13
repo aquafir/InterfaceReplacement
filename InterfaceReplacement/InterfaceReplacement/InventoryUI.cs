@@ -20,7 +20,7 @@ internal class InventoryUI : IDisposable
     Vector2 MIN_SIZE = new(200, 400);
     Vector2 MAX_SIZE = new(1000, 900);
 
-    readonly InventoryHud backpack;
+    readonly InterfaceReplacement backpack;
 
     public InventoryUI()
     {
