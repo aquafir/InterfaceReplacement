@@ -1,4 +1,4 @@
-﻿namespace InventoryUI;
+﻿namespace InventoryUI.HUDs;
 
 public class InventoryHud : IDisposable
 {
@@ -108,7 +108,7 @@ public class InventoryHud : IDisposable
     #region Hotkeys / Other Checks
     private void CheckRefresh()
     {
-        if(refreshHud)
+        if (refreshHud)
         {
             refreshHud = false;
             UpdateFilters();
@@ -201,17 +201,17 @@ public class InventoryHud : IDisposable
             return;
 
         EquipmentHelper.DrawEquipment();
-//        function ToHex(num) return "0x"..string.format("%08x", num) end
+        //        function ToHex(num) return "0x"..string.format("%08x", num) end
 
-//for i, armor in ipairs(game.Character.Equipment) do
-//                local armorMask = EquipMask.FromValue(armor.Value(IntId.CurrentWieldedLocation))
-//  print(armor, ToHex(armorMask.ToNumber()), armorMask)
-//  for i, mask in ipairs(EquipMask.GetValues()) do
-//                if mask ~= EquipMask.None and armorMask + mask == armorMask then
-//      print("  - "..ToHex(mask.ToNumber())..":"..tostring(mask))
-//    end
-//  end
-//end
+        //for i, armor in ipairs(game.Character.Equipment) do
+        //                local armorMask = EquipMask.FromValue(armor.Value(IntId.CurrentWieldedLocation))
+        //  print(armor, ToHex(armorMask.ToNumber()), armorMask)
+        //  for i, mask in ipairs(EquipMask.GetValues()) do
+        //                if mask ~= EquipMask.None and armorMask + mask == armorMask then
+        //      print("  - "..ToHex(mask.ToNumber())..":"..tostring(mask))
+        //    end
+        //  end
+        //end
 
         //foreach(var equip in game.Character.Equipment)
         //{
@@ -269,7 +269,7 @@ public class InventoryHud : IDisposable
         if (ImGui.Combo("Prop", ref filterComboIndex, filterTypes, filterTypes.Length))
         {
             //Parse PropType from combo.  Do here to prevent PropFilter change refresh
-            if (Enum.TryParse<PropType>(filterTypes[filterComboIndex], out propType))
+            if (Enum.TryParse(filterTypes[filterComboIndex], out propType))
             {
                 propFilter = new PropertyFilter(propType);
                 SetFilteredItems();
@@ -355,7 +355,7 @@ public class InventoryHud : IDisposable
             wo.Appraise();
 
         //Filter by regex
-        if (!String.IsNullOrEmpty(FilterText))
+        if (!string.IsNullOrEmpty(FilterText))
         {
             if (!FilterRegex.IsMatch(wo.Name))
                 return true;
@@ -679,7 +679,7 @@ public class InventoryHud : IDisposable
 
     private unsafe void FastDropAll()
     {
-        foreach(var item in filteredItems)
+        foreach (var item in filteredItems)
         {
             item.Drop();
         }
@@ -733,9 +733,9 @@ public class InventoryHud : IDisposable
                 writer.Write((uint)0xF7B1); // order header
                 writer.Write((uint)0x0); // sequence.. ace doesnt verify this
                 writer.Write((uint)0x00CD); // give item
-                writer.Write((uint)game.World.Selected.Id); //target
+                writer.Write(game.World.Selected.Id); //target
                 writer.Write((uint)item); // item
-                writer.Write((int)1); // amount
+                writer.Write(1); // amount
                 var bytes = stream.ToArray();
                 fixed (byte* bytesPtr = bytes)
                 {

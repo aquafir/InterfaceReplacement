@@ -1,4 +1,6 @@
-﻿namespace InventoryUI;
+﻿using InventoryUI.HUDs;
+
+namespace InventoryUI;
 
 /// <summary>
 /// Controls what UIs are shown

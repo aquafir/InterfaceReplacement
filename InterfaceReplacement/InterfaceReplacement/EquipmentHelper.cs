@@ -1,5 +1,8 @@
 ﻿namespace InventoryUI;
 
+/// <summary>
+/// Draw equipped items
+/// </summary>
 public static class EquipmentHelper
 {
     private const int PADDING = 5;
@@ -150,28 +153,6 @@ public static class EquipmentHelper
             slots.Add(EquipSlots.YellowAetheria);
         if (wo.ValidWieldedLocations.HasFlag(EquipMask.RedAetheria))
             slots.Add(EquipSlots.RedAetheria);
-
-        //uint cloak = 0x8000000;
-        //uint trinket = 0x4000000;
-        //uint bAeth = 0x10000000;
-        //uint yAeth = 0x20000000;
-        //uint rAeth = 0x40000000;
-
-        //uint value = (uint)wo.ValidWieldedLocations;
-        //if ((cloak & value) != 0)
-        //    slots.Add(EquipSlots.Cloak);
-
-        //if ((trinket & value) != 0)
-        //    slots.Add(EquipSlots.Trinket);
-
-        //if ((bAeth & value) != 0)
-        //    slots.Add(EquipSlots.BlueAetheria);
-
-        //if ((yAeth & value) != 0)
-        //    slots.Add(EquipSlots.YellowAetheria);
-
-        //if ((rAeth & value) != 0)
-        //    slots.Add(EquipSlots.RedAetheria);
 
         return slots;
     }
