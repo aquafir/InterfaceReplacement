@@ -1,23 +1,10 @@
-﻿//using ACE.DatLoader.FileTypes;
-//using ACE.Entity.Models;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Service;
-using PropType = ACEditor.Props.PropType;
-using System.Threading.Tasks;
-using ACEditor.Table;
-using WorldObject = UtilityBelt.Scripting.Interop.WorldObject;
-using InventoryUI;
-
-namespace ACEditor;
+﻿namespace ACEditor;
 internal class PropertyEditor : IDisposable
 {
     /// <summary>
     /// The UBService Hud
     /// </summary>
-    readonly UtilityBelt.Service.Views.Hud hud;
+    readonly Hud hud;
     readonly Game game = new();
     readonly List<PropertyTable> propTables = new()
     {

@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Interop;
-using Vital = UtilityBelt.Scripting.Interop.Vital;
-
-namespace ACEditor.Table;
+﻿namespace InventoryUI.Table;
 
 public class PropertyData
 {
@@ -11,18 +6,18 @@ public class PropertyData
     public string Name { get; set; }
 
     //Todo: should I make these observable?
-    public Dictionary<IntId, int> IntValues { get; set;  } = new();
-    public Dictionary<Int64Id, long> Int64Values { get; set;  } = new();
-    public Dictionary<StringId, string> StringValues { get; set;  } = new();
-    public Dictionary<BoolId, bool> BoolValues { get; set;  } = new();
-    public Dictionary<FloatId, float> FloatValues { get; set;  } = new();
-    
-    public Dictionary<InstanceId, uint> InstanceValues { get; set;  } = new();
-    public Dictionary<DataId, uint> DataValues { get; set;  } = new();
+    public Dictionary<IntId, int> IntValues { get; set; } = new();
+    public Dictionary<Int64Id, long> Int64Values { get; set; } = new();
+    public Dictionary<StringId, string> StringValues { get; set; } = new();
+    public Dictionary<BoolId, bool> BoolValues { get; set; } = new();
+    public Dictionary<FloatId, float> FloatValues { get; set; } = new();
 
-    public Dictionary<SkillId, Skill> Skills { get; set;  } = new();
-    public Dictionary<AttributeId, Attribute> Attributes { get; set;  } = new();
-    public Dictionary<VitalId, Vital> Vitals { get; set;  } = new();
+    public Dictionary<InstanceId, uint> InstanceValues { get; set; } = new();
+    public Dictionary<DataId, uint> DataValues { get; set; } = new();
+
+    public Dictionary<SkillId, Skill> Skills { get; set; } = new();
+    public Dictionary<AttributeId, Attribute> Attributes { get; set; } = new();
+    public Dictionary<VitalId, Vital> Vitals { get; set; } = new();
 
     public PropertyData(WorldObject wo)
     {

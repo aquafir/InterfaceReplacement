@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Service.Lib;
-using UtilityBelt.Service.Views;
+﻿using UtilityBelt.Service.Lib;
 
-namespace InventoryUI.Textures;
+namespace InventoryUI.Helpers;
 
 public static class TextureManager
 {

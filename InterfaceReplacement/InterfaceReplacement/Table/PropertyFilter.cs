@@ -1,17 +1,7 @@
-﻿using ACEditor.Props;
-
-
-//using Decal.Adapter;
+﻿//using Decal.Adapter;
 //using Decal.Adapter.Wrappers;
-using ImGuiNET;
-using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Interop;
 
-
-namespace ACEditor.Table;
+namespace InventoryUI.Table;
 
 public class PropertyFilter
 {
@@ -116,7 +106,7 @@ public class PropertyFilter
         }
 
         //Find the enum index if possible
-        if (String.IsNullOrEmpty(Selection))
+        if (string.IsNullOrEmpty(Selection))
             return;
 
         EnumIndex =

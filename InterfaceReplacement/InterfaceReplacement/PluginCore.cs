@@ -1,15 +1,11 @@
-﻿using Decal.Adapter;
-using System;
-using System.IO;
-
-namespace InventoryUI;
+﻿namespace InventoryUI;
 /// <summary>
 /// This is the main plugin class. When your plugin is loaded, Startup() is called, and when it's unloaded Shutdown() is called.
 /// </summary>
 [FriendlyName("InventoryUI")]
 public class PluginCore : PluginBase
 {
-    private InventoryUI ui;
+    private InterfaceController ui;
 
     /// <summary>
     /// Assembly directory containing the plugin dll
@@ -39,7 +35,7 @@ public class PluginCore : PluginBase
         try
         {
             //  CoreManager.Current.Actions.AddChatText($"This is my new decal plugin. CharacterFilter_LoginComplete", 1);
-            ui = new InventoryUI();
+            ui = new InterfaceController();
 
         }
         catch (Exception ex)

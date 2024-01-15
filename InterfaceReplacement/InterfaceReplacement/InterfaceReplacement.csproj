@@ -16,7 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="PluginCore.cs" />
-    <None Include="InventoryUI.cs" />
+    <None Include="InterfaceController.cs" />
     <Content Include="README.md" />
     <Content Include="scripts\installer.nsi" />
     <Content Include="scripts\post-build.ps1" />

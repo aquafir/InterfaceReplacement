@@ -1,15 +1,9 @@
-﻿using AcClient;
-using ImGuiNET;
-using System;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Service;
-using UtilityBelt.Service.Views;
+﻿namespace InventoryUI;
 
-namespace InventoryUI;
-internal class InventoryUI : IDisposable
+/// <summary>
+/// Controls what UIs are shown
+/// </summary>
+internal class InterfaceController : IDisposable
 {
     /// <summary>
     /// The UBService Hud
@@ -20,9 +14,9 @@ internal class InventoryUI : IDisposable
     Vector2 MIN_SIZE = new(200, 400);
     Vector2 MAX_SIZE = new(1000, 900);
 
-    readonly InterfaceReplacement backpack;
+    readonly InventoryHud backpack;
 
-    public InventoryUI()
+    public InterfaceController()
     {
         
         // Create a new UBService Hud

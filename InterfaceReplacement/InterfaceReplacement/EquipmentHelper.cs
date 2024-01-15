@@ -1,12 +1,4 @@
-﻿using ImGuiNET;
-using InventoryUI.Textures;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Linq;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Interop;
-
-namespace InventoryUI;
+﻿namespace InventoryUI;
 
 public static class EquipmentHelper
 {

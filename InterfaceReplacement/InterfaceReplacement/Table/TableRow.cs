@@ -1,4 +1,4 @@
-﻿namespace ACEditor.Table;
+﻿namespace InventoryUI.Table;
 
 public class TableRow
 {

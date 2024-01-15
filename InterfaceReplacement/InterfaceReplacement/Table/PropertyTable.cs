@@ -1,8 +1,4 @@
-﻿using ACEditor.Props;
-using ImGuiNET;
-using System;
-
-namespace ACEditor.Table;
+﻿namespace InventoryUI.Table;
 
 public class PropertyTable
 {
@@ -85,7 +81,7 @@ public class PropertyTable
     public void SetTarget(PropertyData target)
     {
         //Todo: clone?
-        this.Target = target;
+        Target = target;
         Filter?.SetTarget(target);
 
         UpdateTable();
@@ -116,7 +112,7 @@ public class PropertyTable
 
             //Todo: do this more better
             var specs = (&tableSortSpecs)->NativePtr;
-            specs->SpecsDirty = 0;            
+            specs->SpecsDirty = 0;
 
             Array.Sort(tableData, CompareTableRows);
         }
@@ -180,7 +176,7 @@ public class PropertyTable
 
                 ImGui.TableNextColumn();
                 ImGui.InputText($"###{Type}{i}", ref tableData[i].CurrentValue, 300);
-                
+
                 //ImGui.Text($"{tableData[i].CurrentValue}");
             }
 

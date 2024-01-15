@@ -1,8 +1,4 @@
-﻿using ACEditor.Props;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Interop;
-
-namespace InventoryUI.Comparison;
+﻿namespace InventoryUI.Helpers;
 public class ValueRequirement
 {
     /// <summary>

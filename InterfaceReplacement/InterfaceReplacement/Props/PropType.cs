@@ -1,10 +1,5 @@
 ﻿//using ACE.Entity.Enum.Properties;
 //using ACE.Server.WorldObjects;
-using ACEditor.Table;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UtilityBelt.Common.Enums;
 //using PropertyBool = ACEditor.Props.PropertyBool;
 
 namespace ACEditor.Props;

@@ -1,6 +1,4 @@
-﻿using Decal.Adapter;
-
-namespace InventoryUI;
+﻿namespace InventoryUI;
 
 public static class C
 {

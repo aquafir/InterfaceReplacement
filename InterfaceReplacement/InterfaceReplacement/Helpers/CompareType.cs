@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace InventoryUI.Comparison;
+﻿namespace InventoryUI.Helpers;
 
 public enum CompareType
 {

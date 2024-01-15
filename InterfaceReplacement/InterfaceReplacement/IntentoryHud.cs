@@ -1,24 +1,4 @@
-﻿using AcClient;
-using ACEditor.Props;
-using ACEditor.Table;
-using ImGuiNET;
-using InventoryUI.Comparison;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-using System.Text.RegularExpressions;
-using UtilityBelt.Common.Enums;
-using UtilityBelt.Scripting.Enums;
-using UtilityBelt.Scripting.Interop;
-using UtilityBelt.Service.Views;
-using Hud = UtilityBelt.Service.Views.Hud;
-using Vector4 = System.Numerics.Vector4;
-using WorldObject = UtilityBelt.Scripting.Interop.WorldObject;
-using InventoryUI.Textures;
-
-namespace InventoryUI;
+﻿namespace InventoryUI;
 
 public class InventoryHud : IDisposable
 {
@@ -102,7 +82,6 @@ public class InventoryHud : IDisposable
 
         AddEvents();
     }
-
 
     #region Event Handling
     private void Hud_OnShow(object sender, EventArgs e)
